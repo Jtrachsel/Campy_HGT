@@ -14,7 +14,7 @@ ani_dist <- ani_tab %>%
   column_to_rownames(var='X1') %>% as.dist()
 
 ani_mds <- cmdscale(ani_dist) %>% as.data.frame() %>% 
-  rownames_to_column(var='genome')
+  rownames_to_column(var='genome') 
 
 
 ani_mds %>% ggplot(aes(x=V1, y=V2)) +
@@ -37,14 +37,17 @@ metadata <- ani_tab %>%
   filter(!(result_genome %in% parental_genomes)) %>% 
   group_by(result_genome) %>% 
   summarise(recipient_genome=parental_genome[which.min(ani_dist)]) %>% 
-  mutate(donor_genome=case_when(
-    result_genome == '11601MDx6631'        ~ '6631', 
-    result_genome == '6461x13150'          ~ '6461', 
-    result_genome == '6461x13150exp137'    ~ '6461', 
-    result_genome == '6461x14229-5'        ~ '14229-5', 
-    result_genome == '6461x6067'           ~ '6067', 
-    grepl('Sample', result_genome)         ~ '14229-5')) %>% 
-  mutate(pan_dir=paste(donor_genome,recipient_genome,result_genome,sep = '_'))
+  mutate(
+    experiment=paste0('experiment_', seq_along(result_genome)),
+    donor_genome=case_when(
+      result_genome == '11601MDx6631'        ~ '6631', 
+      result_genome == '6461x13150'          ~ '6461', 
+      result_genome == '6461x13150exp137'    ~ '6461', 
+      result_genome == '6461x14229-5'        ~ '14229-5', 
+      result_genome == '6461x6067'           ~ '6067', 
+      grepl('Sample', result_genome)         ~ '14229-5')) %>% 
+  mutate(pan_dir=paste(donor_genome,recipient_genome,result_genome,sep = '_')) %>% 
+  select(experiment, donor_genome, recipient_genome, result_genome, pan_dir)
 
 metadata %>% write_tsv('./outputs/01_metadata.tsv')
 

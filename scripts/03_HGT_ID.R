@@ -17,9 +17,10 @@ generate_deleted_gene_table <-
     pii_path <- paste0(base_dir, '/gifrop_out/pan_with_island_info.csv')
     Rtab_path <- paste0(base_dir, '/gene_presence_absence.Rtab')
     
-    pii <- read_csv(pii_path)
+    # pii <- read_csv(pii_path)
+    pii <- read_csv(pii_path, col_types = c('cddcccccccdddcdcdcdddccc'))
     
-    Rtab <- read_tsv(Rtab_path)%>% 
+    Rtab <- read_tsv(Rtab_path, col_types = c('cddd'))%>% 
       select(Gene, RECIPIENT, DONOR, RESULT) %>% 
       column_to_rownames(var = 'Gene')
     
@@ -27,6 +28,7 @@ generate_deleted_gene_table <-
     THESE <- rownames(Rtab[(Rtab[,1] > 0) & (Rtab[,3] == 0),])
     
     res <- pii %>% filter(Gene %in% THESE)
+    return(res)
     
   }
 
@@ -50,9 +52,9 @@ generate_transferred_gene_table <-
     pii_path <- paste0(base_dir, '/gifrop_out/pan_with_island_info.csv')
     Rtab_path <- paste0(base_dir, '/gene_presence_absence.Rtab')
     
-    pii <- read_csv(pii_path)
+    pii <- read_csv(pii_path, col_types = c('cddcccccccdddcdcdcdddccc'))
     
-    Rtab <- read_tsv(Rtab_path)%>% 
+    Rtab <- read_tsv(Rtab_path, col_types = c('cddd'))%>% 
       select(Gene, RECIPIENT, DONOR, RESULT) %>% 
       column_to_rownames(var = 'Gene')
     
@@ -87,7 +89,7 @@ HGT_ID <-
     cii_path <- paste(base_dir, 'gifrop_out/clustered_island_info.csv', sep = '')
     # gpai_path <- paste(base_dir, 'gifrop_out/pan_with_island_info.csv', sep = '')
     
-    cii <- read_csv(cii_path, col_types = 'ccccccccddddcddlccccccc')
+    cii <- read_csv(cii_path, col_types = 'ccccccccddddcddlccccccc') 
     # gpai <- read_csv(gpai_path, col_types = 'cddcccccdddcdcdcdddccc')
     
     # potentials <- gpai %>% filter(`No. isolates` == 2)
@@ -112,8 +114,7 @@ HGT_ID <-
                case_when(
                  genome_name == donor     ~ 'donor', 
                  genome_name == recipient ~ 'recipient', 
-                 genome_name == result    ~ 'result'
-               ))
+                 genome_name == result    ~ 'result'))
     # browser()
     cii %>% filter(cii[[clust_level]] %in% these)
     # return(cii %>% filter(!!clust_level %in% these))
@@ -227,6 +228,9 @@ DELETED <- lapply(these_dirs, generate_deleted_gene_table)
 RESULTS <- lapply(these_dirs, HGT_ID, clust_level='quat_cluster')
 
 
+
+
+# RESULTS[[3]]
 # plot_islands(RESULTS[[1]], clust_level = quat_cluster)
 # plot_islands(RESULTS[[2]], clust_level = quat_cluster)
 # plot_islands(RESULTS[[3]], clust_level = quat_cluster)
@@ -248,34 +252,44 @@ RESULTS <- lapply(these_dirs, HGT_ID, clust_level='quat_cluster')
 
 # 
 # 
-# for(i in 1:length(exp_names)) {
-#   
-#   cat("  \n###",  exp_names[i], "\n")
-#   
-#   RESULTS[[i]] %>% select(c(1,6, 12, 17, 18, 19, 24)) %>% 
-#     kable(caption = 'Transferred genomic islands') %>% 
-#     kable_styling(bootstrap_options = 'striped')
-#   
-#   plot_islands(RESULTS[[i]], clust_level = quat_cluster) 
-#   
-#   TRANSFERRED[[i]] %>%
-#     select(Gene, all_Qclusters, Annotation, 22:24) %>% 
-#     kable(caption = 'Transferred Genes') %>% 
-#     kable_styling(bootstrap_options = 'striped')
-#   
-#   DELETED[[i]] %>%
-#     select(Gene, all_Qclusters, Annotation, 22:24) %>% 
-#     kable(caption = 'Deleted Genes') %>% 
-#     kable_styling(bootstrap_options = 'striped')
-#   browser()
-#   
-#   cat("  \n*****  
-#   
-# <br/>  
-# <br/>  
-# <br/>  
+
+result_names <- sub('(.*) \\+ (.*) \\= (.*)', '\\3', exp_names)
+
+names(RESULTS) <- result_names
+
+# view(RESULTS$SampleF)
+names(TRANSFERRED) <- result_names
+names(DELETED) <- result_names
+# 
+# TRANSFERRED$SampleB
+
+
+for(i in 1:length(result_names)) {
+
+  # cat("  \n###",  exp_names[i], "\n")
+
+  RESULTS[[i]] %>% write_tsv(paste0('./outputs/', result_names[i], '_Results.tsv'))
+
+  # plot_islands(RESULTS[[i]], clust_level = quat_cluster)
+
+  TRANSFERRED[[i]] %>% write_tsv(paste0('./outputs/', result_names[i], '_transferred.tsv'))
+    # select(Gene, all_Qclusters, Annotation, 22:24) %>%
+    # kable(caption = 'Transferred Genes') %>%
+    # kable_styling(bootstrap_options = 'striped')
+
+  DELETED[[i]] %>% write_tsv(paste0('./outputs/', result_names[i], '_deleted.tsv'))
+  #   select(Gene, all_Qclusters, Annotation, 22:24) %>%
+  #   kable(caption = 'Deleted Genes') %>%
+  #   kable_styling(bootstrap_options = 'striped')
+  # browser()
+
+#   cat("  \n*****
+# 
+# <br/>
+# <br/>
+# <br/>
 #   \n")
-# }
+}
 # RESULTS[[14]]
 ###
 #read in gffs

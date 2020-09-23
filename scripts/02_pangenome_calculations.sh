@@ -2,7 +2,10 @@
 
 # run this script with conda environment with gifrop install in it
 
+# makes conda commands available in script 
 source ~/miniconda3/etc/profile.d/conda.sh
+
+#activate conda environment with gifrop installed in it
 conda activate gifrop
 
 # make pangenomes directory

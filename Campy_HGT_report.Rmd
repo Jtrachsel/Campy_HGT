@@ -18,7 +18,9 @@ knitr::opts_chunk$set(echo = FALSE)
 knitr::opts_chunk$set(warning = FALSE)
 knitr::opts_chunk$set(message = FALSE)
 
+source("./scripts/01_setup.R", local = knitr::knit_global())
 source("./scripts/03_HGT_ID.R", local = knitr::knit_global())
+
 
 
 ```
@@ -54,26 +56,23 @@ Visualizing pairwise ANI.
 
 ```{r, echo=FALSE}
 
-ani_tab <-
-  read_tsv('./outputs/pyani_res/ANIm_percentage_identity.tab') %>% 
-  pivot_longer(cols = -X1, names_to='genome', values_to='ANI') %>% 
-  mutate(ani_dist=1-ANI) %>%
-  select(-ANI)
-
-
-ani_dist <- ani_tab %>% 
-  pivot_wider(names_from = genome, values_from=ani_dist) %>% 
-  column_to_rownames(var='X1') %>%
-  as.dist()
-
-ani_mds <- cmdscale(ani_dist) %>% as.data.frame() %>% 
-  rownames_to_column(var='genome')
-
-
+# ani_tab <-
+#   read_tsv('./outputs/pyani_res/ANIm_percentage_identity.tab') %>% 
+#   pivot_longer(cols = -X1, names_to='genome', values_to='ANI') %>% 
+#   mutate(ani_dist=1-ANI) %>%
+#   select(-ANI)
+# 
+# 
+# ani_dist <- ani_tab %>% 
+#   pivot_wider(names_from = genome, values_from=ani_dist) %>% 
+#   column_to_rownames(var='X1') %>%
+#   as.dist()
+# 
+# 
 ani_mds %>% ggplot(aes(x=V1, y=V2)) +
   geom_point()+
-  geom_text_repel(aes(label=genome)) + 
-  labs(x='MDS1', y='MDS2') + 
+  geom_text_repel(aes(label=genome)) +
+  labs(x='MDS1', y='MDS2') +
   ggtitle('MDS showing genome similarity, based on ANI')
 
 
@@ -99,12 +98,18 @@ read_tsv('./outputs/01_metadata.tsv') %>%
 Reporting results separately for each mating experiment.    
   
 For each experiment there will be the following items:  
-  1. Table of 'genomic islands'   
-  2. Table of transferred genes  
-  3. Table of deleted genes  
+  1. Table of 'genomic islands' (XXX_Results.tsv)   
+  2. Table of transferred genes  (XXX_transferred.tsv)
+  3. Table of deleted genes  (XXX_deleted.tsv)
   4. plot showing where genomic islands are found in the donor and result genomes.  
   
-The tables in this report only contain a subset of the columns for viewing ease. Full versions of these tables are available in the results directory I will provide you.  
+The tables in this report only contain a subset of the columns for viewing ease.  
+  
+I should also mention that some of the events may be caused by residual sequencing errors. For example, if there is a gene that is interrupted by and indel and it was split into two genes in a parental genome, but this same gene is not interrupted by an indel and not split into two genes in the result genome, this will look like a deletion event when it's really just a leftover sequencing error.  
+
+  
+  
+  
   
 
 
@@ -114,7 +119,6 @@ The tables in this report only contain a subset of the columns for viewing ease.
 for(i in 1:length(exp_names)) {
   
   cat("  \n###",  exp_names[i], "\n")
-
   RESULTS[[i]] %>% select(c(1,6, 12, 17, 18, 19, 24)) %>% 
   kable(caption = 'Transferred genomic islands') %>% 
   kable_styling(bootstrap_options = 'striped') %>% print()
@@ -131,7 +135,7 @@ for(i in 1:length(exp_names)) {
   kable(caption = 'Deleted Genes') %>% 
   kable_styling(bootstrap_options = 'striped') %>% print()
 
-
+# browser()
  cat("  \n*****  
   
 <br/>  
