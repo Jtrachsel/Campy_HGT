@@ -27,8 +27,8 @@ source("./scripts/03_HGT_ID.R", local = knitr::knit_global())
 
 ## Overview  
   
-Terms:  
-
+### Terms  
+  
 - Parental: The genomes which took part in the mating experiments  
 - Donor: The genome which was the source of the transferred AMR phenotype  
 - Recipient: The genome which the AMR phenotype was transferred into  
@@ -54,7 +54,7 @@ This is accomplished by calculating the alignment based average nucleotide ident
 
 Visualizing pairwise ANI.  
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, fig.width=10}
 
 # ani_tab <-
 #   read_tsv('./outputs/pyani_res/ANIm_percentage_identity.tab') %>% 
@@ -83,64 +83,130 @@ ani_mds %>% ggplot(aes(x=V1, y=V2)) +
 This table lays out the mating experiments as they have been analysed below.  
 
 
+
+
 ```{r pressure, echo=FALSE}
 
 read_tsv('./outputs/01_metadata.tsv') %>%
-  select(donor_genome, recipient_genome, result_genome, -pan_dir) %>% 
+  select(experiment, donor_genome, recipient_genome, result_genome, -pan_dir) %>% 
   kable() %>% 
   kable_styling(bootstrap_options = 'striped')
 
 
 
 ```
+
+  
+### Issues to address:  
+  
+The SampleF assembly is not complete, Unicycler did not identify the chromosome as circular and so did not re-orient the starting coordinates to match the other genomes.  We should make an effort to fix this.  If you provide me the location of the raw reads (both long and short) I can make an attempt at this.  
+For experiment_1 : 6631 + 11601MD = 11601MDx6631, I did not detect any genes that were transferred into this strain, only three that were deleted.
+  
+  
+### Notes  
+
+  
+I should also mention that some of the events may be caused by residual sequencing errors. For example, if there is a gene that is interrupted by and indel and it was split into two genes in a parental genome, but this same gene is not interrupted by an indel and not split into two genes in the result genome, this will look like a deletion event when it's really just a leftover sequencing error.  
+  
+  
+Another thing to note.  Often there are two or more very closely spaced transfers of genomic islands.  I think these represent larger recombination events.  I think these occur where the donor genome has some homology with the recipient genome, but maybe also some extra genes sprinkled in.  In the result genome, this donor region replaces the homologous recipient region, resulting in new genes being introduced into the result genome.  These events aren't represented by one genomic island transfer, because these regions of homology contain genes that are common to all three genomes ( these common genes interrupt the genomic island ).  In support of this hypothesis, there are  instances of what looks like the same gene being transferred into the recipient strain and also deleted from the recipient strain at the same time.  These cases represent the recipient versions of these genes being replaced by donor versions of these genes.  Because the donor and recipient versions of the same gene are less than 99% identical they are called as two different genes in the pangenome analysis.
+  
+    
+  
+
+
+
+
+
+
+
+
+
 ## Results  
   
-Reporting results separately for each mating experiment.    
+Reporting results separately for each mating experiment.  
   
 For each experiment there will be the following items:  
+  
   1. Table of 'genomic islands' (XXX_Results.tsv)   
   2. Table of transferred genes  (XXX_transferred.tsv)
   3. Table of deleted genes  (XXX_deleted.tsv)
   4. plot showing where genomic islands are found in the donor and result genomes.  
   
+  
 The tables in this report only contain a subset of the columns for viewing ease.  
-  
-I should also mention that some of the events may be caused by residual sequencing errors. For example, if there is a gene that is interrupted by and indel and it was split into two genes in a parental genome, but this same gene is not interrupted by an indel and not split into two genes in the result genome, this will look like a deletion event when it's really just a leftover sequencing error.  
-
-  
-  
-  
-  
 
 
-```{r ,fig.width=6,echo=FALSE,message=FALSE,results="asis"}
+```{r ,fig.width=9,echo=FALSE,message=FALSE,results="asis"}
 
-
-for(i in 1:length(exp_names)) {
+for (result_genome in metadata$result_genome){
   
-  cat("  \n###",  exp_names[i], "\n")
-  RESULTS[[i]] %>% select(c(1,6, 12, 17, 18, 19, 24)) %>% 
+  i <- which(metadata$result_genome == result_genome)
+  exper <- metadata$experiment[i]
+  don <- metadata$donor_genome[i]
+  rec <- metadata$recipient_genome[i]
+  resu <- metadata$result_genome[i]
+  exp_name <- paste(exper,':', don, '+', rec, '=', resu )
+  
+  cat("  \n###",  exp_name, "\n")
+  
+  RESULTS[[result_genome]] %>% 
+  select(c(1,6, 12, 17, 18, 19, 24)) %>% 
   kable(caption = 'Transferred genomic islands') %>% 
   kable_styling(bootstrap_options = 'striped') %>% print()
-
-  plot_islands(RESULTS[[i]], clust_level = quat_cluster) %>% print()
-
-  TRANSFERRED[[i]] %>%
+    
+    
+  plot_islands(RESULTS[[result_genome]], clust_level = quat_cluster) %>% print()
+  
+  TRANSFERRED[[result_genome]] %>% 
   select(Gene, all_Qclusters, Annotation, 22:24) %>% 
   kable(caption = 'Transferred Genes') %>% 
   kable_styling(bootstrap_options = 'striped') %>% print()
-
-  DELETED[[i]] %>%
+    
+  DELETED[[result_genome]] %>%
   select(Gene, all_Qclusters, Annotation, 22:24) %>% 
   kable(caption = 'Deleted Genes') %>% 
   kable_styling(bootstrap_options = 'striped') %>% print()
-
-# browser()
- cat("  \n*****  
+  cat(" END", exp_name, "  \n")
+  
+   cat("  \n*****  
   
 <br/>  
 <br/>  
 <br/>  
   \n")
+  
 }
+
+
+
+
+# 
+# for(i in 1:length(exp_names)) {
+#   
+#   cat("  \n###",  exp_names[i], "\n")
+#   RESULTS[[i]] %>% select(c(1,6, 12, 17, 18, 19, 24)) %>% 
+#   kable(caption = 'Transferred genomic islands') %>% 
+#   kable_styling(bootstrap_options = 'striped') %>% print()
+# 
+#   plot_islands(RESULTS[[i]], clust_level = quat_cluster) %>% print()
+# 
+#   TRANSFERRED[[i]] %>%
+#   select(Gene, all_Qclusters, Annotation, 22:24) %>% 
+#   kable(caption = 'Transferred Genes') %>% 
+#   kable_styling(bootstrap_options = 'striped') %>% print()
+# 
+#   DELETED[[i]] %>%
+#   select(Gene, all_Qclusters, Annotation, 22:24) %>% 
+#   kable(caption = 'Deleted Genes') %>% 
+#   kable_styling(bootstrap_options = 'striped') %>% print()
+# 
+# # browser()
+#  cat("  \n*****  
+#   
+# <br/>  
+# <br/>  
+# <br/>  
+#   \n")
+# }
 ```

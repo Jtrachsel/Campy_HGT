@@ -26,8 +26,13 @@ generate_deleted_gene_table <-
     
     # genes present in recipient but missing from result
     THESE <- rownames(Rtab[(Rtab[,1] > 0) & (Rtab[,3] == 0),])
+    # browser()
+    res <- pii %>%
+      filter(Gene %in% THESE)
     
-    res <- pii %>% filter(Gene %in% THESE)
+    
+    res <- res[order(res[[RECIPIENT]]),]
+    
     return(res)
     
   }
@@ -60,7 +65,10 @@ generate_transferred_gene_table <-
     
     THESE <- rownames(Rtab[(Rtab[,1] == 0) & (Rtab[,3] > 0) & (Rtab[,2] > 0),])
     
-    res <- pii %>% filter(Gene %in% THESE)
+    res <- pii %>%
+      filter(Gene %in% THESE)
+    
+    res <- res[order(res[[RESULT]]),]
     
     return(res)
     
@@ -116,9 +124,10 @@ HGT_ID <-
                  genome_name == recipient ~ 'recipient', 
                  genome_name == result    ~ 'result'))
     # browser()
-    cii %>% filter(cii[[clust_level]] %in% these)
+    res <- cii %>% filter(cii[[clust_level]] %in% these)
+    res <- res[order(res[[clust_level]]),]
     # return(cii %>% filter(!!clust_level %in% these))
-    
+    return(res)
   }
 
 plot_islands <- function(HGT_ID_result, clust_level){
@@ -227,8 +236,12 @@ DELETED <- lapply(these_dirs, generate_deleted_gene_table)
 # genomic islands transfered from the donor to the recipient
 RESULTS <- lapply(these_dirs, HGT_ID, clust_level='quat_cluster')
 
+# 
+# LOOK <- DELETED[[6]]
+# 
+# LOOK_ORDERED <- DELETED[[6]][order(DELETED[[6]][['6461']]),]
 
-
+sort(as.numeric(sub('[A-Z]+_([0-9]+)','\\1',DELETED[[6]][['6461']])))
 
 # RESULTS[[3]]
 # plot_islands(RESULTS[[1]], clust_level = quat_cluster)
@@ -249,7 +262,7 @@ RESULTS <- lapply(these_dirs, HGT_ID, clust_level='quat_cluster')
 
 
 
-
+metadata <- read_tsv('./outputs/01_metadata.tsv')
 # 
 # 
 
@@ -257,39 +270,51 @@ result_names <- sub('(.*) \\+ (.*) \\= (.*)', '\\3', exp_names)
 
 names(RESULTS) <- result_names
 
-# view(RESULTS$SampleF)
 names(TRANSFERRED) <- result_names
 names(DELETED) <- result_names
 # 
-# TRANSFERRED$SampleB
 
-
-for(i in 1:length(result_names)) {
-
-  # cat("  \n###",  exp_names[i], "\n")
-
-  RESULTS[[i]] %>% write_tsv(paste0('./outputs/', result_names[i], '_Results.tsv'))
-
-  # plot_islands(RESULTS[[i]], clust_level = quat_cluster)
-
-  TRANSFERRED[[i]] %>% write_tsv(paste0('./outputs/', result_names[i], '_transferred.tsv'))
-    # select(Gene, all_Qclusters, Annotation, 22:24) %>%
-    # kable(caption = 'Transferred Genes') %>%
-    # kable_styling(bootstrap_options = 'striped')
-
-  DELETED[[i]] %>% write_tsv(paste0('./outputs/', result_names[i], '_deleted.tsv'))
-  #   select(Gene, all_Qclusters, Annotation, 22:24) %>%
-  #   kable(caption = 'Deleted Genes') %>%
-  #   kable_styling(bootstrap_options = 'striped')
-  # browser()
-
-#   cat("  \n*****
-# 
-# <br/>
-# <br/>
-# <br/>
-#   \n")
+# write individual results tsv files
+for (result_genome in metadata$result_genome){
+  
+  RESULTS[[result_genome]] %>% 
+    write_tsv(paste0('./outputs/', names(RESULTS[result_genome]), '_Results.tsv'))
+  
+  TRANSFERRED[[result_genome]] %>% 
+    write_tsv(paste0('./outputs/', names(TRANSFERRED[result_genome]), '_transferred.tsv'))
+  
+  DELETED[[result_genome]] %>%
+    write_tsv(paste0('./outputs/', names(DELETED[result_genome]), '_deleted.tsv'))
+  
 }
+
+# 
+# for(i in 1:length(result_names)) {
+#   
+#   # cat("  \n###",  exp_names[i], "\n")
+# 
+#   RESULTS[[i]] %>% write_tsv(paste0('./outputs/', result_names[i], '_Results.tsv'))
+# 
+#   # plot_islands(RESULTS[[i]], clust_level = quat_cluster)
+# 
+#   TRANSFERRED[[i]] %>% write_tsv(paste0('./outputs/', result_names[i], '_transferred.tsv'))
+#     # select(Gene, all_Qclusters, Annotation, 22:24) %>%
+#     # kable(caption = 'Transferred Genes') %>%
+#     # kable_styling(bootstrap_options = 'striped')
+# 
+#   DELETED[[i]] %>% write_tsv(paste0('./outputs/', result_names[i], '_deleted.tsv'))
+#   #   select(Gene, all_Qclusters, Annotation, 22:24) %>%
+#   #   kable(caption = 'Deleted Genes') %>%
+#   #   kable_styling(bootstrap_options = 'striped')
+#   # browser()
+# 
+# #   cat("  \n*****
+# # 
+# # <br/>
+# # <br/>
+# # <br/>
+# #   \n")
+# }
 # RESULTS[[14]]
 ###
 #read in gffs
