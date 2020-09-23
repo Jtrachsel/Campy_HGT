@@ -1,0 +1,11 @@
+[20:32:59] This is prokka 1.14.6
+[20:32:59] Written by Torsten Seemann <torsten.seemann@gmail.com>
+[20:32:59] Homepage is https://github.com/tseemann/prokka
+[20:32:59] Local time is Mon Sep 21 20:32:59 2020
+[20:32:59] You are Julian.Trachsel
+[20:32:59] Operating system is linux
+[20:32:59] You have BioPerl 1.007002
+[20:32:59] System has 80 cores.
+[20:32:59] Will use maximum of 8 cores.
+[20:32:59] Annotating as >>> Bacteria <<<
+[20:32:59] '*fna' is not a readable non-empty FASTA file
