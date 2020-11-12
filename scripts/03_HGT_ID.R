@@ -218,14 +218,16 @@ HGT_aln <-
 
 ##########
 
-dirs <- list.dirs(path = './outputs/pan_genomes')
+dirs <- list.dirs(path = './outputs/pan_genomes', recursive = FALSE)
 
-these_dirs <- dirs[grep('.*pan$', dirs)]
-these_dirs <- paste0(these_dirs, '/')
+# these_dirs <- dirs[grep('.*pan$', dirs)]
+these_dirs <- paste0(dirs, '/')
+
+these_dirs <- these_dirs[-c(15:16)]
 
 exp_names <- 
   sub('(.*)_(.*)_(.*)', '\\1 + \\2 = \\3',
-      sub('./outputs/pan_genomes/(.*)/pan/','\\1',these_dirs))
+      sub('./outputs/pan_genomes/(.*)/','\\1',these_dirs))
 
 # genes present in donor and result but not recipient
 TRANSFERRED <- lapply(these_dirs, generate_transferred_gene_table)
@@ -236,12 +238,110 @@ DELETED <- lapply(these_dirs, generate_deleted_gene_table)
 # genomic islands transfered from the donor to the recipient
 RESULTS <- lapply(these_dirs, HGT_ID, clust_level='quat_cluster')
 
+
+## this is the dream
+# for each result should return a dataframe two columns
+# loc tags
+# class
+
+
+classify_loc_tags <- 
+  function(base_dir){
+    # for each result genome returns a three column data frame
+    # column 1: genome name
+    # column 2: locus_tag
+    # column 3: classification (all, donor_only, recipient_only, result_only)
+    
+    genomes <- unlist(strsplit(base_dir, split='/'))[4]
+    genomes <- unlist(strsplit(genomes, split = '_'))
+    
+    DONOR=genomes[1]
+    RECIPIENT=genomes[2]
+    RESULT=genomes[3]
+    
+    pii_path <- paste0(base_dir, '/gifrop_out/pan_with_island_info.csv')
+    Rtab_path <- paste0(base_dir, '/gene_presence_absence.Rtab')
+    
+    pii <- read_csv(pii_path, col_types = c('cddcccccccdddcdcdcdddccc'))
+    
+    Rtab <- read_tsv(Rtab_path, col_types = c('cddd'))%>% 
+      select(Gene, RECIPIENT, DONOR, RESULT) %>% 
+      column_to_rownames(var = 'Gene')
+    
+    THESE <- rownames(Rtab[(Rtab[,1] == 0) & (Rtab[,3] > 0) & (Rtab[,2] > 0),])
+    
+    ALL <- rownames(Rtab[rowSums(Rtab) == 3,])
+    RECIPIENT_RESULT <- rownames(Rtab[(Rtab[,1] > 0) & (Rtab[,2] == 0) & (Rtab[,3] > 0),])
+    RECIPIENT_ONLY <- rownames(Rtab[(Rtab[,1] > 0) & (Rtab[,2] == 0) & (Rtab[,3] == 0),])
+    DONOR_ONLY <-     rownames(Rtab[(Rtab[,1] == 0) & (Rtab[,2] > 0) & (Rtab[,3] == 0),])
+    RESULT_ONLY <-    rownames(Rtab[(Rtab[,1] == 0) & (Rtab[,2] == 0) & (Rtab[,3] > 0),])
+    DONOR_RESULT <-   rownames(Rtab[(Rtab[,1] == 0) & (Rtab[,2] > 0) & (Rtab[,3] > 0),])
+    
+    # browser()
+    
+    # recip_only <- pii %>% filter(Gene %in% RECIPIENT_ONLY) %>% select(RECIPIENT)
+    # donor_only <- pii %>% filter(Gene %in% DONOR_ONLY) %>% select(DONOR)
+    
+    result_only <- 
+      pii %>% 
+      filter(Gene %in% RESULT_ONLY) %>%
+      select(RESULT) %>% 
+      mutate(genome=RESULT, 
+             classification='result_only')
+    
+    donor_result <- 
+      pii %>% 
+      filter(Gene %in% DONOR_RESULT) %>% 
+      select(RESULT) %>% 
+      mutate(genome=RESULT, 
+             classification='donor_result')
+      
+    present_in_all <-
+      pii %>%
+      filter(Gene %in% ALL) %>% 
+      select(RESULT) %>% 
+      mutate(genome=RESULT, 
+             classification='all')
+    
+    recipient_result <-
+      pii %>% 
+      filter(Gene %in% RECIPIENT_RESULT) %>% 
+      select(RESULT) %>% 
+      mutate(genome=RESULT, 
+             classification='recipient_result')
+    
+    
+    res <- bind_rows(result_only, donor_result, present_in_all, recipient_result)
+    
+    colnames(res)[1] <- 'locus_tags'
+    
+    return(res)
+    
+  }
+
+LOC_TAG_CLASS <- lapply(these_dirs, classify_loc_tags)
+
+bind_rows(LOC_TAG_CLASS) %>%
+  write_tsv('./outputs/result_locus_tag_classification.tsv')
+
+
+
+
+
+
+
+
+
+
+
+
+
 # 
 # LOOK <- DELETED[[6]]
 # 
 # LOOK_ORDERED <- DELETED[[6]][order(DELETED[[6]][['6461']]),]
 
-sort(as.numeric(sub('[A-Z]+_([0-9]+)','\\1',DELETED[[6]][['6461']])))
+# sort(as.numeric(sub('[A-Z]+_([0-9]+)','\\1',DELETED[[6]][['6461']])))
 
 # RESULTS[[3]]
 # plot_islands(RESULTS[[1]], clust_level = quat_cluster)
@@ -278,13 +378,13 @@ names(DELETED) <- result_names
 for (result_genome in metadata$result_genome){
   
   RESULTS[[result_genome]] %>% 
-    write_tsv(paste0('./outputs/', names(RESULTS[result_genome]), '_Results.tsv'))
+    write_tsv(paste0('./outputs/HGT_results/', names(RESULTS[result_genome]), '_Results.tsv'))
   
   TRANSFERRED[[result_genome]] %>% 
-    write_tsv(paste0('./outputs/', names(TRANSFERRED[result_genome]), '_transferred.tsv'))
+    write_tsv(paste0('./outputs/HGT_results/', names(TRANSFERRED[result_genome]), '_transferred.tsv'))
   
   DELETED[[result_genome]] %>%
-    write_tsv(paste0('./outputs/', names(DELETED[result_genome]), '_deleted.tsv'))
+    write_tsv(paste0('./outputs/HGT_results/', names(DELETED[result_genome]), '_deleted.tsv'))
   
 }
 

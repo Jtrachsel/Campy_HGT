@@ -4,7 +4,7 @@ library(ggrepel)
 #########
 
 
-ani_tab <- read_tsv('/home/Julian.Trachsel/Vanina/outputs/pyani_res/ANIm_percentage_identity.tab') %>% 
+ani_tab <- read_tsv('./outputs/pyani_res/ANIm_percentage_identity.tab') %>% 
   pivot_longer(cols = -X1, names_to='genome', values_to='ANI') %>% 
   mutate(ani_dist=1-ANI) %>% select(-ANI)
 

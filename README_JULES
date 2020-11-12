@@ -1,0 +1,26 @@
+mkdir ../outputs/annotation
+mkdir ../outputs/ppanggolin
+
+# prokka
+cd input_genomes
+for x in *fna; do prokka --prefix "${x%.fna}" --cpus 0 "$x"; done
+# move to annotations folder
+for x in */; do mv $x ../outputs/annotations/; done 
+cd ..
+
+find ./outputs/annotations/ -name *gbk > ./outputs/ppanggolin/gbks.list
+
+while read line; do basename --suffix=.gbk $line; done < ./outputs/ppanggolin/gbks.list > ./outputs/ppanggolin/IDs.list
+
+
+
+
+ppanggolin annotate --anno only_6461s.list -o only6461 
+ppanggolin cluster -p pangenome.h5 --identity .99
+ppanggolin graph -p pangenome.h5 
+ppanggolin partition -p pangenome.h5 
+ppanggolin rgp -p pangenome.h5 --min_length 1000
+ppanggolin spot -p pangenome.h5 -o SPOT --draw_hotspots
+ppanggolin write -p pangenome.h5 --csv --Rtab --projection --stats --partitions --regions --spots --borders --families_tsv --all_prot_families --all_gene_families
+ppanggolin write -p pangenome.h5 --csv --Rtab --projection --stats --partitions --regions --spots --borders --families_tsv --all_prot_families --all_gene_families -o OUTPUT
+
