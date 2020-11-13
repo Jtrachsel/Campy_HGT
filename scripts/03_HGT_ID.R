@@ -301,7 +301,7 @@ classify_loc_tags <-
       filter(Gene %in% ALL) %>% 
       select(RESULT) %>% 
       mutate(genome=RESULT, 
-             classification='all')
+             classification='donor_recipient_result') ## CHANGED FROM 'all'
     
     recipient_result <-
       pii %>% 

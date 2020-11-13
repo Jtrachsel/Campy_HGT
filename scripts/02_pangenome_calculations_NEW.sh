@@ -45,3 +45,7 @@ done < tempfile.tsv
 
 rm tempfile.tsv
 
+
+
+
+## ADD IN CALCULATION FOR ALL 6461s
