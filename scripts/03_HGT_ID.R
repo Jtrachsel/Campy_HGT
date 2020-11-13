@@ -344,21 +344,6 @@ bind_rows(LOC_TAG_CLASS) %>%
 # sort(as.numeric(sub('[A-Z]+_([0-9]+)','\\1',DELETED[[6]][['6461']])))
 
 # RESULTS[[3]]
-# plot_islands(RESULTS[[1]], clust_level = quat_cluster)
-# plot_islands(RESULTS[[2]], clust_level = quat_cluster)
-# plot_islands(RESULTS[[3]], clust_level = quat_cluster)
-# plot_islands(RESULTS[[4]], clust_level = quat_cluster)
-# plot_islands(RESULTS[[5]], clust_level = quat_cluster)
-# plot_islands(RESULTS[[6]], clust_level = quat_cluster) # I bet sampleF genome isnt complete
-# plot_islands(RESULTS[[7]], clust_level = quat_cluster)
-# plot_islands(RESULTS[[8]], clust_level = quat_cluster)
-# plot_islands(RESULTS[[9]], clust_level = quat_cluster)
-# plot_islands(RESULTS[[10]], clust_level = quat_cluster)
-# plot_islands(RESULTS[[11]], clust_level = quat_cluster)
-# plot_islands(RESULTS[[12]], clust_level = quat_cluster) # Interesting...
-# plot_islands(RESULTS[[13]], clust_level = quat_cluster) # Interesting...
-# plot_islands(RESULTS[[14]], clust_level = quat_cluster) # ERROR, empty tibble
-
 
 
 
