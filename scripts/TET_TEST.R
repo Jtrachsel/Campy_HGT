@@ -22,27 +22,24 @@ look <- gpa[grep('tetracycline ', gpa$Annotation),]
 
 
 
-gpa2 <- read_csv('outputs/pan_genomes/6461_13150_6461x13150exp137/pan/gene_presence_absence.csv')
+gpa2 <- read_csv('./outputs/pan_genomes/6461_13150_6461x13150exp137/gene_presence_absence.csv')
 
 look2 <- gpa2[grep('tetracycline ', gpa2$Annotation),]
 
-# PGHKFEJK_01855
-# EKEIMHEI_00148
-# MIPFMNEC_01862
 
-# everything near tet seems to be mostly the same, but then downstream quite a ways there is a gene with very differnt
-# length
-#PGHKFEJK_01847
-#PGHKFEJK_01897
-NA
-MIPFMNEC_01871
+cii <- read_csv('./outputs/pan_genomes/6461_13150_6461x13150exp137/gifrop_out/clustered_island_info.csv')
 
 
+exp137 <- readDNAStringSet('./outputs/annotations/6461x13150exp137/6461x13150exp137.fna')
 
-# THESE ARE THE LOCUS TAGS THAT ARE VERY DIFFERENT LENGTHS
-PGHKFEJK_01897
-NA
-MIPFMNEC_01871
+exp137[2] %>% writeXStringSet(filepath = './outputs/exp137_50kb_plas.fna')
+
+
+recipexp137 <- readDNAStringSet('./outputs/annotations/13150/13150.fna')
+recipexp137[2]%>% writeXStringSet(filepath = './outputs/RECIPexp137_50kb_plas.fna')
+
+# PGHKFEJK_01855	EKEIMHEI_00148	LOEINDNJ_01862
+#218	5798	3008	PGHKFEJK_01897	NA	LOEINDNJ_01871 THESE LOC TAGS HAVE V DIF LENS
 
 
 # THESE ARE TETO
@@ -51,12 +48,14 @@ MIPFMNEC_01871
 # MIPFMNEC_01862
 
 
-gff13150 <- gff_parse3('./outputs/pan_genomes/6461_13150_6461x13150exp137/13150/13150.gff')
+gff13150 <- gff_parse3('./outputs/annotations/13150/13150.gff')
 gff6461 <- gff_parse3('./outputs/pan_genomes/6461_13150_6461x13150exp137/6461/6461.gff')
-gff6461x13150exp137 <- gff_parse3('./outputs/pan_genomes/6461_13150_6461x13150exp137/6461x13150exp137/6461x13150exp137.gff')
+gff6461x13150exp137 <- gff_parse3('./outputs/annotations/6461x13150exp137/6461x13150exp137.gff')
 
 
+# LOEINDNJ_01871 long one
 
+# PGHKFEJK_01897 short one
 
 # 6461x13150_1	tet(O)	chromosome
 # 6461x13150_1	blaOXA-605	chromosome
