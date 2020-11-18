@@ -10,10 +10,15 @@ conda deactivate
 
 conda activate gifrop
 
-mkdir ./outputs/abricate
+mkdir ../outputs/abricate
 
-for x in ./input_genomes/*fna
+for x in ../input_genomes/*fna
   do
   sample=$(basename $x .fna)
-  abricate $x > ./outputs/abricate/"$sample".abricate
+  abricate $x > ../outputs/abricate/"$sample".abricate
 done
+
+
+# annotate with prokka
+
+#parallel 'prokka -output ./outputs/annotations/{/.} -prefix {/.} --proteins ./inputs/CAMPYPROTS.gbk {}' ::: ../input_genomes/*fna
