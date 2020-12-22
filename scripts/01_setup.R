@@ -26,7 +26,7 @@ ani_mds %>% ggplot(aes(x=V1, y=V2)) +
 ## TABLE VERIFYING DONOR RECIPIENT RESULT RELATIONSHIP
 
 
-parental_genomes <- c('11601MD', '6631', '14229-5', '6461', '6067', '13150')
+parental_genomes <- c('11601MD', '6631', '14229-5', '6461', '6067', '13150', 'JCC')
 
 
 metadata <- ani_tab %>% 
@@ -38,15 +38,18 @@ metadata <- ani_tab %>%
   group_by(result_genome) %>% 
   summarise(recipient_genome=parental_genome[which.min(ani_dist)]) %>% 
   mutate(
-    experiment=paste0('experiment_', seq_along(result_genome)),
     donor_genome=case_when(
       result_genome == '11601MDx6631'        ~ '6631', 
       result_genome == '6461x13150'          ~ '6461', 
       result_genome == '6461x13150exp137'    ~ '6461', 
       result_genome == '6461x14229-5'        ~ '14229-5', 
       result_genome == '6461x6067'           ~ '6067', 
-      grepl('Sample', result_genome)         ~ '14229-5')) %>% 
-  mutate(pan_dir=paste(donor_genome,recipient_genome,result_genome,sep = '_')) %>% 
+      grepl('Sample', result_genome)         ~ '14229-5', 
+      result_genome == '13150x6631'          ~ '6631', 
+      result_genome == '13150xJCC'           ~ 'JCC')) %>% 
+  arrange(donor_genome, recipient_genome) %>% 
+  mutate(pan_dir=paste(donor_genome,recipient_genome,result_genome,sep = '_'), 
+         experiment=paste0('experiment_', seq_along(result_genome))) %>% 
   select(experiment, donor_genome, recipient_genome, result_genome, pan_dir)
 
 metadata %>% write_tsv('./outputs/01_metadata.tsv')

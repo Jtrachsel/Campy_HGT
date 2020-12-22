@@ -2,10 +2,11 @@
 
 
 
-cii <- read_csv('/project/fsep_004/jtrachsel/Campy_HGT/outputs/pan_genomes/all_6461s/gifrop_out/clustered_island_info.csv')
+cii <- read_csv('./outputs/pan_genomes/6461s/gifrop_out/clustered_island_info.csv')
 
 
-gpa <- read_csv('/project/fsep_004/jtrachsel/Campy_HGT/outputs/pan_genomes/all_6461s/gene_presence_absence.csv')
+gpa <- read_csv('./outputs/pan_genomes/6461s/gene_presence_absence.csv',
+                col_types = 'cccdddcdcdcdddccccccccccc')
 
 
 gpa <- gpa %>% arrange(`Genome Fragment`, `Order within Fragment`)
@@ -16,7 +17,7 @@ is.na(gpa$`6461`)
 NOT6464 <- gpa[is.na(gpa$`6461`),]
 
 loc_tag_class <- read_tsv('./outputs/result_locus_tag_classification.tsv')
-abricate <- read_tsv('./outputs/pan_genomes/all_6461s/pan_genome_abricate.tsv') %>% 
+abricate <- read_tsv('./outputs/pan_genomes/6461s/pan_genome_abricate.tsv') %>% 
   mutate(locus_tags= SEQUENCE)
 
 gpa_abric <- gpa %>%
@@ -35,7 +36,7 @@ gpa_long$RESISTANCE <- factor(gpa_long$RESISTANCE)
 
 gpa_long %>% 
   filter(`Genome Fragment` == 1) %>% 
-  filter(`Order within Fragment` > 435 & `Order within Fragment` < 525) %>% 
+  filter(`Order within Fragment` > 1250 & `Order within Fragment` < 1400) %>%
   ggplot(aes(x=`Order within Fragment`, y=genome, group=genome)) + 
   geom_point(aes(fill=classification), shape=22, size=4, na.rm = TRUE) +
   geom_point(data=filter(gpa_long, !is.na(RESISTANCE) &(`Order within Fragment` > 435 & `Order within Fragment` < 525)),aes(color=RESISTANCE), na.rm = TRUE )+

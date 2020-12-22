@@ -223,7 +223,7 @@ dirs <- list.dirs(path = './outputs/pan_genomes', recursive = FALSE)
 # these_dirs <- dirs[grep('.*pan$', dirs)]
 these_dirs <- paste0(dirs, '/')
 
-these_dirs <- these_dirs[-c(15:16)]
+these_dirs <- these_dirs[grepl('.*_.*_.*', these_dirs)]
 
 exp_names <- 
   sub('(.*)_(.*)_(.*)', '\\1 + \\2 = \\3',
@@ -358,6 +358,8 @@ names(RESULTS) <- result_names
 names(TRANSFERRED) <- result_names
 names(DELETED) <- result_names
 # 
+
+dir.create('./outputs/HGT_results/')
 
 # write individual results tsv files
 for (result_genome in metadata$result_genome){
