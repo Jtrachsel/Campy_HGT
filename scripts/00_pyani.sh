@@ -2,7 +2,7 @@
 
 set -e 
 
-
+tar -xzvf input_genomes.tar.gz
 
 mkdir ./outputs/
 
