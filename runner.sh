@@ -1,10 +1,11 @@
 #!/bin/bash
 set -e
 
-./00_setup.sh
-Rscript 01_setup.R
-./02_pangenome_calculations.sh
-Rscript 03_HGT_ID.R
+./scripts/00_pyani.sh
+Rscript ./scripts/01_setup.R
+./scripts/02_pangenome_calculations.sh
+Rscript ./scripts/03_HGT_ID.R
 #knit report
-Rscript 04_figures.R
-Rscript 05_TetO_alignments.R
+Rscript ./scripts/04_figures.R
+Rscript ./scripts/05_TetO_alignments.R
+Rscript ./scripts/06_Resistance_annotations.R
