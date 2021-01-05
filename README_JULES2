@@ -1,0 +1,84 @@
+mating experiment = 6461 x 14229-5 selected on EK (Erythromycin + Kanamycin antibiotics)
+
+Sample A to J are different colonies collected from the same experiment.
+Number of samples = 9
+Sample D was deleted as it was showing a contamination on Illumina reads.
+Fanta files in this folder correspond to Unicycler assemblies using Illumina + Nanopore sequences.
+
+Parental strains = 6461 (assembly number: 462) and 14229-5 (assembly number: 470)
+Previous Illumina sequencing of colonies (assembly numbers 466, 476, 492) showed 6461 was the recipient strain.
+
+Aim: Compare the 9 sequences to
+- verify that 6461 is always the recipient strain
+- compare in detail the whole genome to see if insertions/deletions events are the same
+- compare in detail the whole genome to see if insertions/deletions events always happen at the same place in the genome
+
+
+
+
+
+
+
+
+
+
+
+
+
+ while read a b c; do DIR="$a"_"$b"_"$c"; mkdir $DIR; cp "$a".fna "$b".fna "$c".fna ./"$DIR"/; done <subpans.txt
+
+
+6067.fna is missing long reads.  I am going to pull in the short read only assembly.
+
+
+
+# to confirm parent recipient result relationships
+average_nucleotide_identity.py -o pyani_res -i ./
+for x in [0-9]*/; do cd $x; pan_pipe --gifrop_args "--min_genes 1"; cd .. ; done
+
+
+
+for x in [0-9]*/; do cd $x; mkdir pan99; cp ./pan/*gff ./pan99/ ; cd pan99 ; roary -p 20 -i 99 -e -n -z *gff ;gifrop --get_islands --min_genes 1 --flank_dna 1000 --threads 20; cd ../../; done
+
+for x in [0-9]*/; do cd $x; mkdir pan100; cp ./pan/*gff ./pan100/ ; cd pan100 ; roary -p 20 -i 100 -e -n -z *gff ;gifrop --get_islands --min_genes 1 --flank_dna 1000 --threads 20; cd ../../; done
+
+
+
+Samples A-J are 6461 x 14229-5 recipients should all be 6461?
+
+
+selected on EK (Erythromycin + Kanamycin antibiotics)
+A     6461 x 14229-5
+B     6461 x 14229-5
+C     6461 x 14229-5
+D     6461 x 14229-5
+E     6461 x 14229-5
+F     6461 x 14229-5
+G     6461 x 14229-5
+H     6461 x 14229-5
+I     6461 x 14229-5
+J     6461 x 14229-5
+
+VG_m	6461 x 6067 grown on SA (Streptomycin Ampicillin)
+VG_n	6461 x 13150 grown on TK (Tetracycline Kanamycin)
+VG_o	6461 x 14229-5 grown on EK (Erythromycin Kanamycin)
+VG_p	11601MD x 6631 grown on KS (Kanamycin Streptomycin)
+VG_q	N3-R10-137 (animal experiment)
+
+
+   results           best_match
+   <chr>             <chr>     
+ 1 11601MDx6631      11601MD   
+ 2 6461x13150        13150     
+ 3 6461x13150_exp137 13150     
+ 4 6461x14229-5      6461      
+ 5 6461x6067         6461      
+ 6 SampleA           6461      
+ 7 SampleB           6461      
+ 8 SampleC           6461      
+ 9 SampleE           6461      
+10 SampleF           6461      
+11 SampleG           6461      
+12 SampleH           6461      
+13 SampleI           6461      
+14 SampleJ           6461      

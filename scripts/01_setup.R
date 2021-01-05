@@ -4,23 +4,36 @@ library(ggrepel)
 #########
 
 
-ani_tab <- read_tsv('./outputs/pyani_res/ANIm_percentage_identity.tab') %>% 
+ani_tab <-
+  read_tsv('./outputs/pyani_res/ANIm_percentage_identity.tab') %>% 
   pivot_longer(cols = -X1, names_to='genome', values_to='ANI') %>% 
-  mutate(ani_dist=1-ANI) %>% select(-ANI)
+  mutate(ani_dist=1-ANI) %>% 
+  select(-ANI)
 
 
-ani_dist <- ani_tab %>% 
+ani_dist <-
+  ani_tab %>% 
   pivot_wider(names_from = genome, values_from=ani_dist) %>% 
-  column_to_rownames(var='X1') %>% as.dist()
+  column_to_rownames(var='X1') %>%
+  as.dist()
 
-ani_mds <- cmdscale(ani_dist) %>% as.data.frame() %>% 
+ani_mds <- 
+  cmdscale(ani_dist) %>%
+  as.data.frame() %>% 
   rownames_to_column(var='genome') 
 
 
-ani_mds %>% ggplot(aes(x=V1, y=V2)) +
+p_mds <- 
+  ani_mds %>%
+  ggplot(aes(x=V1, y=V2)) +
   geom_point()+
-  geom_text_repel(aes(label=genome)) + 
+  geom_text_repel(aes(label=genome), max.overlaps = 50) + 
   labs(x='MDS1', y='MDS2')
+
+p_mds
+
+ggsave('./outputs/ANI_MDS.jpeg', p_mds)
+
 
 
 ## TABLE VERIFYING DONOR RECIPIENT RESULT RELATIONSHIP
@@ -29,7 +42,8 @@ ani_mds %>% ggplot(aes(x=V1, y=V2)) +
 parental_genomes <- c('11601MD', '6631', '14229-5', '6461', '6067', '13150', 'JCC')
 
 
-metadata <- ani_tab %>% 
+metadata <-
+  ani_tab %>% 
   transmute(parental_genome = X1,
             result_genome = genome,
             ani_dist=ani_dist) %>% 
@@ -37,6 +51,7 @@ metadata <- ani_tab %>%
   filter(!(result_genome %in% parental_genomes)) %>% 
   group_by(result_genome) %>% 
   summarise(recipient_genome=parental_genome[which.min(ani_dist)]) %>% 
+  filter(!grepl('GCA_', result_genome)) %>% 
   mutate(
     donor_genome=case_when(
       result_genome == '11601MDx6631'        ~ '6631', 

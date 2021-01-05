@@ -30,4 +30,10 @@ gpa_abric %>%
   filter(!is.na(RESISTANCE)) %>% 
   transmute(prokka_annotation=Annotation, 
             abricate_annotation=PRODUCT, 
-            RESISTANCE=RESISTANCE) %>% unique()
+            RESISTANCE=RESISTANCE) %>%
+  unique() %>% 
+  write_tsv('./outputs/AMR_annotation_differences.tsv')
+
+
+
+
