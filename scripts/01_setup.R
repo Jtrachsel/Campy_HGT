@@ -34,7 +34,7 @@ p_mds
 
 ggsave('./outputs/ANI_MDS.jpeg', p_mds)
 
-
+print('ANI based MDS saved as ./outputs/ANI_MDS.jpeg')
 
 ## TABLE VERIFYING DONOR RECIPIENT RESULT RELATIONSHIP
 
@@ -70,6 +70,7 @@ metadata <-
 metadata %>% write_tsv('./outputs/01_metadata.tsv')
 
 
+print('metadata saved as ./outputs/01_metadata.tsv')
 
 
 

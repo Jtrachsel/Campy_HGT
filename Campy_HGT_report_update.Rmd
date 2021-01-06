@@ -71,7 +71,7 @@ Visualizing pairwise ANI.
 # 
 ani_mds %>% ggplot(aes(x=V1, y=V2)) +
   geom_point()+
-  geom_text_repel(aes(label=genome)) +
+  geom_text_repel(aes(label=genome), max.overlaps = 1000) +
   labs(x='MDS1', y='MDS2') +
   ggtitle('MDS showing genome similarity, based on ANI')
 

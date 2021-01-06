@@ -62,8 +62,8 @@ resist_pan_coords <-
 pan_low <- signif(resist_pan_coords - 70, 3)
 pan_high <- signif(resist_pan_coords + 100, 3)
 
-zoom1_low <- pan_low + 60
-zoom1_high <- pan_high - 54
+zoom1_low <- pan_low + 52
+zoom1_high <- pan_high - 65
 
 zoom2_low <- pan_low + 65
 zoom2_high <- pan_high - 65
@@ -89,6 +89,23 @@ gpa_long_foc$vir <- ifelse(!is.na(gpa_long_foc$locus_tags) & is.na(gpa_long_foc$
 gpa_long_foc$vir <- sub('\\((.*)\\) .*','\\1',gpa_long_foc$vir)
 
 unique(gpa_long_foc$vir)
+
+# hclust order y axis by similarity #
+check <- 
+  gpa_long_foc %>% 
+  mutate(present=ifelse(is.na(locus_tags), 0,1)) %>% 
+  select(genome, present, Gene) %>% 
+  spread(key=Gene, value=present) %>% 
+  column_to_rownames('genome') %>% 
+  as.matrix() %>% 
+  dist() %>% 
+  hclust()
+
+lab_orders <- check$labels[check$order]
+
+gpa_long_foc <- 
+  gpa_long_foc %>% 
+  mutate(genome = factor(genome, levels =lab_orders))
 
 p1 <- 
   gpa_long_foc %>% 
@@ -125,6 +142,8 @@ p2 <-
   filter(`Order within Fragment` >= zoom1_low & `Order within Fragment` <= zoom1_high) %>% 
   filter(!is.na(locus_tags)) %>% 
   ggplot(aes(x=`Order within Fragment`, y=genome, group=genome)) + 
+  geom_vline(xintercept = zoom1_low -1, color='orange', size=2)+
+  geom_vline(xintercept = zoom1_high +1, color='orange', size=2)+
   geom_point(aes(fill=classification), shape=22, size=4.5, show.legend = FALSE) +
   geom_point(data=filter(gpa_long_foc, !is.na(AMR) & genome != '6461'),
              color='red', size=2,na.rm = TRUE , shape=17, show.legend = FALSE)+
@@ -145,16 +164,16 @@ p2
 
 
 fig_1 <- ggdraw()+
-  draw_plot(p1, 0,.5,1,.5)+
-  draw_plot(p2, 0,0,1,.5)+
-  draw_plot_label(x=c(0,0), y=c(1,.45), label = c('A', 'B'))
+  draw_plot(p1, 0,.6,1,.4)+
+  draw_plot(p2, 0,0,1,.6)+
+  draw_plot_label(x=c(0,0), y=c(1,.6), label = c('A', 'B'))
 fig_1
 
 
 ggsave(fig_1,
        filename = './outputs/figure1.jpeg',
        width = 260,
-       height = 200,
+       height = 260,
        device = 'jpeg',
        dpi = 300,
        units = 'mm')
