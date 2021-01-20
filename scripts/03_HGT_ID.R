@@ -18,6 +18,7 @@ generate_deleted_gene_table <-
     Rtab_path <- paste0(base_dir, '/gene_presence_absence.Rtab')
     
     # pii <- read_csv(pii_path)
+    # browser()
     pii <- read_csv(pii_path, col_types = c('cddcccccccdddcdcdcdddccc'))
     
     Rtab <- read_tsv(Rtab_path, col_types = c('cddd'))%>% 
@@ -56,7 +57,7 @@ generate_transferred_gene_table <-
     
     pii_path <- paste0(base_dir, '/gifrop_out/pan_with_island_info.csv')
     Rtab_path <- paste0(base_dir, '/gene_presence_absence.Rtab')
-    
+    # browser()
     pii <- read_csv(pii_path, col_types = c('cddcccccccdddcdcdcdddccc'))
     
     Rtab <- read_tsv(Rtab_path, col_types = c('cddd'))%>% 
@@ -96,8 +97,8 @@ HGT_ID <-
     
     cii_path <- paste(base_dir, 'gifrop_out/clustered_island_info.csv', sep = '')
     # gpai_path <- paste(base_dir, 'gifrop_out/pan_with_island_info.csv', sep = '')
-    
-    cii <- read_csv(cii_path, col_types = 'ccccccccddddcddlccccccc') 
+    # browser()
+    cii <- read_csv(cii_path, col_types = 'ccccccccddddcddlccccccccc') 
     # gpai <- read_csv(gpai_path, col_types = 'cddcccccdddcdcdcdddccc')
     
     # potentials <- gpai %>% filter(`No. isolates` == 2)

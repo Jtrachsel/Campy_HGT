@@ -79,9 +79,11 @@ gpa_long_foc <-
 
 
 gpa_long_foc$RESISTANCE <- factor(gpa_long_foc$RESISTANCE)
+# 
+# 
 
-
-gpa_long_foc$AMR <- ifelse(!is.na(gpa_long_foc$locus_tags) & !is.na(gpa_long_foc$RESISTANCE),gpa_long_foc$PRODUCT, NA)
+# gpa_long_foc[grepl('AMR', gpa_long_foc$Annotation),]
+gpa_long_foc$AMR <- ifelse(!is.na(gpa_long_foc$locus_tags) & grepl('AMR', gpa_long_foc$Annotation),gpa_long_foc$Annotation, NA)
 gpa_long_foc$AMR <- sub("aminoglycoside O-phosphotransferase ", "", gpa_long_foc$AMR)
 
 gpa_long_foc$vir <- ifelse(!is.na(gpa_long_foc$locus_tags) & is.na(gpa_long_foc$RESISTANCE) ,gpa_long_foc$PRODUCT,NA)
@@ -148,7 +150,7 @@ p2 <-
   geom_point(data=filter(gpa_long_foc, !is.na(AMR) & genome != '6461'),
              color='red', size=2,na.rm = TRUE , shape=17, show.legend = FALSE)+
   geom_point(data=filter(gpa_long_foc, !is.na(vir) & genome != '6461' &
-                           `Order within Fragment` >=1458 &`Order within Fragment` <= 1477), size=2,na.rm = TRUE , shape=17, color='orange', show.legend = FALSE)+
+                           `Order within Fragment` >=zoom1_low &`Order within Fragment` <= zoom1_high), size=2,na.rm = TRUE , shape=17, color='orange', show.legend = FALSE)+
   geom_text(data=annot, aes(x=`Order within Fragment`, y=-5.5, label=Annotation3), inherit.aes = FALSE, hjust='left', size=3.5) + 
   scale_y_discrete(expand=expansion(mult=c(.75,.09))) + coord_flip()+
   scale_fill_viridis_d() +

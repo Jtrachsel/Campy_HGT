@@ -22,6 +22,8 @@ source("./scripts/01_setup.R", local = knitr::knit_global())
 source("./scripts/03_HGT_ID.R", local = knitr::knit_global())
 
 
+RESULTS[[1]] %>% 
+select(c(1,6, 12, 16, 19, 20, 26))
 
 ```
 
@@ -125,7 +127,7 @@ for (result_genome in metadata$result_genome){
   cat("  \n###",  exp_name, "\n")
   
   RESULTS[[result_genome]] %>% 
-  select(c(1,6, 12, 17, 18, 19, 24)) %>% 
+  select(c(1,6, 12, 16, 19, 20, 26)) %>% 
   kable(caption = 'Transferred genomic islands') %>% 
   kable_styling(bootstrap_options = 'striped') %>% print()
     
