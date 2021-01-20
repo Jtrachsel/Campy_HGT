@@ -6,7 +6,10 @@ set -e
 # source ~/miniconda3/etc/profile.d/conda.sh
 
 #activate conda environment with gifrop installed in it
-source activate gifrop
+CONDA_BASE=$(conda info --base)
+source $CONDA_BASE/etc/profile.d/conda.sh
+
+conda activate gifrop
 
 # make pangenomes directory
 mkdir ./outputs/pan_genomes
