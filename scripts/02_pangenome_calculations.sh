@@ -41,6 +41,10 @@ while read a b c d e
   # pan_pipe --roary_args '-p 20 -i 99 -e -n -z' --gifrop_args '--min_genes 1 --flank_dna 1000 --threads 20'
   roary -p 20 -i 99 -e -n -z *gff
   gifrop -m 1 --threads 20 --get_islands --flank_dna 1000
+  
+  sed -E "s/>(.*) (.*)/>\2/g" pan_genome_reference.fa > pan_genome_reference.fasta
+  abricate -db ncbi pan_genome_reference.fasta > pan_genome_abricate.ncbi
+  abricate -db vfdb pan_genome_reference.fasta > pan_genome_abricate.vfdb
   # return to script directory
   cd -
 
@@ -67,8 +71,10 @@ cd ./outputs/pan_genomes/6461s
 roary -p 20 -i 99 -e -n -z *gff
 gifrop -m 1 --threads 20 --get_islands --flank_dna 1000
 
-abricate pan_genome_reference.fa > pan_genome_abricate.tsv
-abricate --db vfdb pan_genome_reference.fa > pan_genome_vfdb.tsv
+sed -E "s/>(.*) (.*)/>\2/g" pan_genome_reference.fa > pan_genome_reference.fasta
+abricate -db ncbi pan_genome_reference.fasta > pan_genome_abricate.ncbi
+abricate -db vfdb pan_genome_reference.fasta > pan_genome_abricate.vfdb
+
 
 cd -
 
@@ -83,8 +89,9 @@ cd ./outputs/pan_genomes/ALL
 
 roary -p 20 -i 99 -e -n -z *gff
 
-abricate pan_genome_reference.fa > pan_genome_abricate.tsv
-abricate --db vfdb pan_genome_reference.fa > pan_genome_vfdb.tsv
+sed -E "s/>(.*) (.*)/>\2/g" pan_genome_reference.fa > pan_genome_reference.fasta
+abricate -db ncbi pan_genome_reference.fasta > pan_genome_abricate.ncbi
+abricate -db vfdb pan_genome_reference.fasta > pan_genome_abricate.vfdb
 
 cd -
 
@@ -108,9 +115,9 @@ cd ./outputs/pan_genomes/tetO/
 
 roary -p 20 -i 99 -e -n -z *gff
 
-abricate pan_genome_reference.fa > pan_genome_abricate.tsv
-abricate --db vfdb pan_genome_reference.fa > pan_genome_vfdb.tsv
-
+sed -E "s/>(.*) (.*)/>\2/g" pan_genome_reference.fa > pan_genome_reference.fasta
+abricate -db ncbi pan_genome_reference.fasta > pan_genome_abricate.ncbi
+abricate -db vfdb pan_genome_reference.fasta > pan_genome_abricate.vfdb
 
 cd -
 
