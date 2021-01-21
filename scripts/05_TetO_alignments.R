@@ -1,13 +1,17 @@
 library(tidyverse)
 library(Biostrings)
 
+abric <- 
+  read_tsv('./outputs/pan_genomes/tetO/pan_genome_abricate.ncbi') %>%
+  mutate(Gene=SEQUENCE)
 
-gpa <- read_csv('./outputs/pan_genomes/tetO/gene_presence_absence.csv')
+gpa <- read_csv('./outputs/pan_genomes/tetO/gene_presence_absence.csv') %>% 
+  left_join(abric)
 
 
-
+unique(gpa$RESISTANCE)
 # look <- gpa %>% filter(`Genome Fragment` ==2)
-look <- gpa[grep('[Tt]etracycline [Rr]esistance', gpa$Annotation),]
+look <- gpa[grep('TETRACYCLINE', gpa$RESISTANCE),]
 
 THESE <- 
   look %>%
@@ -76,7 +80,7 @@ width(TetOnuc)
 # TetO[width(TetO) == 691]
 
 
-TetO[width(TetO) != 691]
+# TetO[width(TetO) != 691]
 
 library(msa)
 
