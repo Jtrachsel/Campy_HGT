@@ -39,7 +39,7 @@ while read a b c d e
   #       also output separate fastas containing 1000bp of flanking DNA on either side of island
   
   # pan_pipe --roary_args '-p 20 -i 99 -e -n -z' --gifrop_args '--min_genes 1 --flank_dna 1000 --threads 20'
-  roary -p 20 -i 99 -e -n -z *gff
+  roary -p 40 -i 99 -e -n -z *gff
   gifrop -m 1 --threads 20 --get_islands --flank_dna 1000
   
   sed -E "s/>(.*) (.*)/>\2/g" pan_genome_reference.fa > pan_genome_reference.fasta
@@ -87,7 +87,7 @@ find ./outputs/annotations/ -iname '*.gff' -exec cp {} ./outputs/pan_genomes/ALL
 
 cd ./outputs/pan_genomes/ALL
 
-roary -p 20 -i 99 -e -n -z *gff
+roary -p 40 -i 99 -e -n -z *gff
 
 sed -E "s/>(.*) (.*)/>\2/g" pan_genome_reference.fa > pan_genome_reference.fasta
 abricate -db ncbi pan_genome_reference.fasta > pan_genome_abricate.ncbi
@@ -113,7 +113,7 @@ find ./outputs/annotations/ -name 'GCA_*.gff' -exec cp {} ./outputs/pan_genomes/
 
 cd ./outputs/pan_genomes/tetO/
 
-roary -p 20 -i 99 -e -n -z *gff
+roary -p 40 -i 99 -e -n -z *gff
 
 sed -E "s/>(.*) (.*)/>\2/g" pan_genome_reference.fa > pan_genome_reference.fasta
 abricate -db ncbi pan_genome_reference.fasta > pan_genome_abricate.ncbi

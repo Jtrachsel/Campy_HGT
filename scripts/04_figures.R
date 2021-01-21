@@ -26,10 +26,10 @@ NOT6464 <- gpa[is.na(gpa$`6461`),]
 loc_tag_class <- read_tsv('./outputs/result_locus_tag_classification.tsv')
 
 
-abricate <- read_tsv('./outputs/pan_genomes/6461s/pan_genome_abricate.tsv') %>% 
+abricate <- read_tsv('./outputs/pan_genomes/6461s/pan_genome_abricate.ncbi') %>% 
   mutate(locus_tags= SEQUENCE)
 
-vfdb <- read_tsv('./outputs/pan_genomes/6461s/pan_genome_vfdb.tsv') %>% 
+vfdb <- read_tsv('./outputs/pan_genomes/6461s/pan_genome_abricate.vfdb') %>% 
   mutate(locus_tags=SEQUENCE)
 
 
