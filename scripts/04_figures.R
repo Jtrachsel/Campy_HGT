@@ -27,10 +27,10 @@ loc_tag_class <- read_tsv('./outputs/result_locus_tag_classification.tsv')
 
 
 abricate <- read_tsv('./outputs/pan_genomes/6461s/pan_genome_abricate.ncbi') %>% 
-  mutate(locus_tags= SEQUENCE)
+  mutate(Gene= SEQUENCE)
 
 vfdb <- read_tsv('./outputs/pan_genomes/6461s/pan_genome_abricate.vfdb') %>% 
-  mutate(locus_tags=SEQUENCE)
+  mutate(Gene=SEQUENCE)
 
 
 abricate <- rbind(abricate, vfdb)
@@ -65,8 +65,8 @@ pan_high <- signif(resist_pan_coords + 100, 3)
 zoom1_low <- pan_low + 52
 zoom1_high <- pan_high - 65
 
-zoom2_low <- pan_low + 65
-zoom2_high <- pan_high - 65
+# zoom2_low <- pan_low + 65
+# zoom2_high <- pan_high - 65
 
 
 gpa_long_foc <- 
@@ -83,12 +83,13 @@ gpa_long_foc$RESISTANCE <- factor(gpa_long_foc$RESISTANCE)
 # 
 
 # gpa_long_foc[grepl('AMR', gpa_long_foc$Annotation),]
-gpa_long_foc$AMR <- ifelse(!is.na(gpa_long_foc$locus_tags) & grepl('AMR', gpa_long_foc$Annotation),gpa_long_foc$Annotation, NA)
-gpa_long_foc$AMR <- sub("aminoglycoside O-phosphotransferase ", "", gpa_long_foc$AMR)
+gpa_long_foc$AMR <- ifelse(!is.na(gpa_long_foc$locus_tags) & !is.na(gpa_long_foc$RESISTANCE),gpa_long_foc$PRODUCT, NA)
+# gpa_long_foc$AMR <- sub("aminoglycoside O-phosphotransferase ", "", gpa_long_foc$AMR)
+unique(gpa_long_foc$AMR )
 
-gpa_long_foc$vir <- ifelse(!is.na(gpa_long_foc$locus_tags) & is.na(gpa_long_foc$RESISTANCE) ,gpa_long_foc$PRODUCT,NA)
+gpa_long_foc$vir <- ifelse(!is.na(gpa_long_foc$locus_tags) & !is.na(gpa_long_foc$PRODUCT)& is.na(gpa_long_foc$RESISTANCE) ,gpa_long_foc$PRODUCT,NA)
 
-gpa_long_foc$vir <- sub('\\((.*)\\) .*','\\1',gpa_long_foc$vir)
+gpa_long_foc$vir <- sub('(\\(.*\\) [A-Za-z0-9\\/ \\-]+) \\[.*\\]','\\1',gpa_long_foc$vir)
 
 unique(gpa_long_foc$vir)
 
@@ -148,9 +149,11 @@ p2 <-
   geom_vline(xintercept = zoom1_high +1, color='orange', size=2)+
   geom_point(aes(fill=classification), shape=22, size=4.5, show.legend = FALSE) +
   geom_point(data=filter(gpa_long_foc, !is.na(AMR) & genome != '6461'),
-             color='red', size=2,na.rm = TRUE , shape=17, show.legend = FALSE)+
+             fill='red',color='black', size=2,na.rm = TRUE , shape=21, show.legend = FALSE)+
   geom_point(data=filter(gpa_long_foc, !is.na(vir) & genome != '6461' &
-                           `Order within Fragment` >=zoom1_low &`Order within Fragment` <= zoom1_high), size=2,na.rm = TRUE , shape=17, color='orange', show.legend = FALSE)+
+                           `Order within Fragment` >=zoom1_low &
+                           `Order within Fragment` <= zoom1_high),
+             size=2,na.rm = TRUE , shape=21, color='black',fill='pink', show.legend = FALSE)+
   geom_text(data=annot, aes(x=`Order within Fragment`, y=-5.5, label=Annotation3), inherit.aes = FALSE, hjust='left', size=3.5) + 
   scale_y_discrete(expand=expansion(mult=c(.75,.09))) + coord_flip()+
   scale_fill_viridis_d() +
