@@ -6,11 +6,11 @@ look <- gpa[grep('tetracycline ', gpa$Annotation),]
 
 
 
-abricate <- read_tsv('./outputs/pan_genomes/ALL/pan_genome_abricate.tsv') %>% 
-  mutate(locus_tags= SEQUENCE)
+abricate <- read_tsv('./outputs/pan_genomes/ALL/pan_genome_abricate.ncbi') %>% 
+  mutate(Gene= SEQUENCE)
 
-vfdb <- read_tsv('./outputs/pan_genomes/ALL/pan_genome_vfdb.tsv') %>% 
-  mutate(locus_tags=SEQUENCE)
+vfdb <- read_tsv('./outputs/pan_genomes/ALL/pan_genome_abricate.vfdb') %>% 
+  mutate(Gene=SEQUENCE)
 
 
 abricate <- rbind(abricate, vfdb)
