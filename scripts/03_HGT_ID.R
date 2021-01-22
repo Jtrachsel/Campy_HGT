@@ -19,7 +19,27 @@ generate_deleted_gene_table <-
     
     # pii <- read_csv(pii_path)
     # browser()
-    pii <- read_csv(pii_path, col_types = c('cddcccccccdddcdcdcdddccc'))
+    ncbi_AMR_path <- paste0(base_dir, 'pan_genome_abricate.ncbi')
+    vfdb_path <- paste0(base_dir, 'pan_genome_abricate.vfdb')
+    
+    abric <- bind_rows(read_tsv(ncbi_AMR_path), read_tsv(vfdb_path)) %>% 
+      mutate(Gene=SEQUENCE)
+    # ncbi_AMR <- read_tsv(ncbi_AMR_path)
+    # vfdb <- read_tsv(vfdb_path)
+    
+    pii <- read_csv(pii_path, col_types = c('cddcccccccdddcdcdcdddccc')) %>% 
+      left_join(abric) %>% 
+      mutate(TYPE=
+               case_when(
+                 DATABASE == 'ncbi' ~ 'AMR', 
+                 DATABASE == 'vfdb' ~ 'virulence', 
+                 TRUE     ~  'none'
+               ), 
+             Annotation=
+               case_when(
+                 TYPE %in% c('AMR', 'vfdb') ~ PRODUCT, 
+                 TRUE ~ Annotation
+               ))
     
     Rtab <- read_tsv(Rtab_path, col_types = c('cddd'))%>% 
       select(Gene, RECIPIENT, DONOR, RESULT) %>% 
@@ -32,7 +52,8 @@ generate_deleted_gene_table <-
       filter(Gene %in% THESE)
     
     
-    res <- res[order(res[[RECIPIENT]]),]
+    res <- res[order(res[[RECIPIENT]]),] %>% 
+      select(c(1,4,8,9,10,11,14,15,16,19,20,21,22,23,24,39,40))
     
     return(res)
     
@@ -58,7 +79,27 @@ generate_transferred_gene_table <-
     pii_path <- paste0(base_dir, '/gifrop_out/pan_with_island_info.csv')
     Rtab_path <- paste0(base_dir, '/gene_presence_absence.Rtab')
     # browser()
-    pii <- read_csv(pii_path, col_types = c('cddcccccccdddcdcdcdddccc'))
+    ncbi_AMR_path <- paste0(base_dir, 'pan_genome_abricate.ncbi')
+    vfdb_path <- paste0(base_dir, 'pan_genome_abricate.vfdb')
+    
+    abric <- bind_rows(read_tsv(ncbi_AMR_path), read_tsv(vfdb_path)) %>% 
+      mutate(Gene=SEQUENCE)
+    # ncbi_AMR <- read_tsv(ncbi_AMR_path)
+    # vfdb <- read_tsv(vfdb_path)
+    
+    pii <- read_csv(pii_path, col_types = c('cddcccccccdddcdcdcdddccc')) %>% 
+      left_join(abric) %>% 
+      mutate(TYPE=
+               case_when(
+                 DATABASE == 'ncbi' ~ 'AMR', 
+                 DATABASE == 'vfdb' ~ 'virulence', 
+                 TRUE     ~  'none'
+               ), 
+             Annotation=
+               case_when(
+                 TYPE %in% c('AMR', 'vfdb') ~ PRODUCT, 
+                 TRUE ~ Annotation
+               ))
     
     Rtab <- read_tsv(Rtab_path, col_types = c('cddd'))%>% 
       select(Gene, RECIPIENT, DONOR, RESULT) %>% 
@@ -69,7 +110,8 @@ generate_transferred_gene_table <-
     res <- pii %>%
       filter(Gene %in% THESE)
     
-    res <- res[order(res[[RESULT]]),]
+    res <- res[order(res[[RESULT]]),] %>% 
+      select(c(1,4,8,9,10,11,14,15,16,19,20,21,22,23,24,39,40))
     
     return(res)
     
