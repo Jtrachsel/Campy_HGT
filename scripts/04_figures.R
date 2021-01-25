@@ -183,9 +183,337 @@ ggsave(fig_1,
        dpi = 300,
        units = 'mm')
 
+# lookshere <- ggplot_build(p1)
+# 
+# 
+# unique(lookshere$data[[3]]$fill)
+
+# Don_rec_res "#35B779FF"
+# Don_res "#440154FF"
+# Rec_res "#31688EFF"
+# res_only "#FDE725FF"
+### Two other transfer events islands ###
+
+# Idea, 
+# what functions or cell locations are enriched in:
+# 1) Transferred genes,
+# 2) Conserved genes adjacent to insertion
+# 3) 
 
 
-### Other islands ###
+
+
+
+
+######## FUNCTION ######
+
+# Next figure #
+
+generate_transfer_plots <- function(base_dir,
+                                    DONOR,
+                                    RECIPIENT,
+                                    RESULT,
+                                    TARGET, 
+                                    adj1_low,
+                                    adj1_high,
+                                    low_shrink,
+                                    high_shrink){
+  # browser()
+  # outputs/pan_genomes/6631_11601MD_11601MDx6631/ path to directory that contains pangenome calc by roary
+  rtab_path <- paste0(base_dir, '/gene_presence_absence.Rtab')
+  loc_tag_class <- read_tsv(rtab_path) %>% 
+    column_to_rownames(var = 'Gene')
+  # THIS NEEDS TO BE CHANGED, SPLIT BASE_DIR FOR PICKING WHICH COLUMN IS WHICH GENOME
+  donor_recipient_result <- rownames(loc_tag_class[rowSums(loc_tag_class) == 3,]) # donor recipient result
+  donor_recipient <- rownames(loc_tag_class[loc_tag_class[,DONOR] > 0 & loc_tag_class[,RECIPIENT] > 0 & loc_tag_class[,RESULT] == 0, ])# donor_recipient
+  recipient_result <- rownames(loc_tag_class[loc_tag_class[,DONOR] == 0 & loc_tag_class[,RECIPIENT] > 0 & loc_tag_class[,RESULT] > 0, ])  # recipient_result 
+  donor_result <- rownames(loc_tag_class[loc_tag_class[,DONOR] > 0 & loc_tag_class[,RECIPIENT] == 0 & loc_tag_class[,RESULT] > 0, ]) # donor_result
+  
+  donor <- rownames(loc_tag_class[loc_tag_class[,DONOR] > 0 & loc_tag_class[,RECIPIENT] == 0 & loc_tag_class[,RESULT] == 0, ])# donor only
+  recipient <- rownames(loc_tag_class[loc_tag_class[,DONOR] == 0 & loc_tag_class[,RECIPIENT] > 0 & loc_tag_class[,RESULT] == 0, ])# recipient only
+  result <- rownames(loc_tag_class[loc_tag_class[,DONOR] == 0 & loc_tag_class[,RECIPIENT] == 0 & loc_tag_class[,RESULT] > 0,] )# result only
+  
+  gpa_path <- paste0(base_dir,'/gene_presence_absence.csv')
+  gpa <- read_csv(gpa_path,
+                  col_types = 'cccdddcdcdcdddccc') %>%
+    mutate(loc_tag_class=
+             case_when(
+               Gene %in% donor_recipient_result ~ 'donor_recipient_result', 
+               Gene %in% donor_recipient        ~ 'donor_recipient', 
+               Gene %in% recipient_result       ~ 'recipient_result', 
+               Gene %in% donor_result           ~ 'donor_result', 
+               Gene %in% donor                  ~ 'donor', 
+               Gene %in% recipient              ~ 'recipient', 
+               Gene %in% result                 ~ 'result'
+             ))
+  
+  
+  
+  gpa <- gpa %>% arrange(`Genome Fragment`, `Order within Fragment`)
+  
+  
+  # is.na(gpa$`6461`)
+  
+  # NOT6464 <- gpa[is.na(gpa$`6461`),]
+  
+  # loc_tag_class <- read_tsv('./outputs/result_locus_tag_classification.tsv')
+  
+  AMR_path <- paste0(base_dir, '/pan_genome_abricate.ncbi')
+  abricate <- read_tsv(AMR_path) %>% 
+    mutate(Gene= SEQUENCE)
+  
+  vfdb_path <- paste0(base_dir, '/pan_genome_abricate.vfdb')
+  vfdb <- read_tsv(vfdb_path) %>% 
+    mutate(Gene=SEQUENCE)
+  
+  
+  abricate <- rbind(abricate, vfdb)
+  
+  gpa_abric <- 
+    gpa %>%
+    pivot_longer(cols = c(15:17), names_to='genome', values_to='locus_tags') %>%
+    left_join(abricate) %>% 
+    select(Gene, Annotation,`Genome Fragment`, PRODUCT, RESISTANCE) %>% 
+    filter(!is.na(PRODUCT)) %>% 
+    unique()
+  
+  
+  
+  gpa_long <-
+    gpa %>%
+    pivot_longer(cols = c(15:17), names_to='genome', values_to='locus_tags') %>% 
+    # left_join(loc_tag_class) %>% 
+    left_join(gpa_abric) 
+    
+  res_order <- gpa_long %>% filter(genome == all_of(RESULT)) %>%
+    arrange(locus_tags) %>% 
+    mutate(order_in_result_genome=seq_along(locus_tags)) %>% 
+    select(Gene, order_in_result_genome)
+  
+  gpa_long <- gpa_long %>% left_join(res_order)
+    
+  # pick resist? return one result for each resist?
+  
+  resist_pan_coords <- 
+    gpa_long %>% 
+    filter(`Genome Fragment` ==1) %>% 
+    filter(!is.na(RESISTANCE)) %>% 
+    group_by(order_in_result_genome,`Genome Fragment`, RESISTANCE) %>% 
+    tally() %>% 
+    filter(grepl(TARGET, RESISTANCE)) %>% 
+    pull(order_in_result_genome)
+  
+  pan_low <- signif(resist_pan_coords - adj1_low, 3)
+  pan_high <- signif(resist_pan_coords + adj1_high, 3)
+  
+  # 
+  # pan_low <- signif(resist_pan_coords - 70, 3)
+  # pan_high <- signif(resist_pan_coords + 100, 3)
+  # 
+  zoom1_low <- pan_low + low_shrink
+  zoom1_high <- pan_high - high_shrink
+  
+  # zoom2_low <- pan_low + 65
+  # zoom2_high <- pan_high - 65
+  
+  
+  gpa_long_foc <- 
+    gpa_long %>% 
+    filter(`Genome Fragment` == 1) %>% 
+    filter(order_in_result_genome > pan_low & order_in_result_genome < pan_high) 
+  
+  
+  
+  
+  
+  gpa_long_foc$RESISTANCE <- factor(gpa_long_foc$RESISTANCE)
+  # 
+  # 
+  
+  # gpa_long_foc[grepl('AMR', gpa_long_foc$Annotation),]
+  gpa_long_foc$AMR <- ifelse(!is.na(gpa_long_foc$locus_tags) & !is.na(gpa_long_foc$RESISTANCE),gpa_long_foc$PRODUCT, NA)
+  # gpa_long_foc$AMR <- sub("aminoglycoside O-phosphotransferase ", "", gpa_long_foc$AMR)
+  unique(gpa_long_foc$AMR )
+  
+  gpa_long_foc$vir <- ifelse(!is.na(gpa_long_foc$locus_tags) & !is.na(gpa_long_foc$PRODUCT)& is.na(gpa_long_foc$RESISTANCE) ,gpa_long_foc$PRODUCT,NA)
+  
+  gpa_long_foc$vir <- sub('(\\(.*\\) [A-Za-z0-9\\/ \\-]+) \\[.*\\]','\\1',gpa_long_foc$vir)
+  
+  unique(gpa_long_foc$vir)
+  
+  # hclust order y axis by similarity #
+  check <- 
+    gpa_long_foc %>% 
+    mutate(present=ifelse(is.na(locus_tags), 0,1)) %>% 
+    select(genome, present, Gene) %>% 
+    spread(key=Gene, value=present, fill=0) %>% 
+    column_to_rownames('genome') %>% 
+    as.matrix() %>% 
+    dist() %>% 
+    hclust()
+  
+  lab_orders <- check$labels[check$order]
+  
+  gpa_long_foc <- 
+    gpa_long_foc %>% 
+    filter(!is.na(locus_tags)) %>% 
+    filter(genome == RESULT) %>% 
+    mutate(genome = factor(genome, levels =lab_orders)) %>% 
+    arrange((locus_tags))
+    
+  
+  p1_data <- 
+    gpa_long_foc %>% 
+    filter(!is.na(locus_tags)) %>% 
+    filter(genome == RESULT) 
+  p1 <- 
+    p1_data %>%
+    ggplot(aes(x=order_in_result_genome, y=genome, group=genome)) + 
+    geom_vline(xintercept = zoom1_low, color='orange', size=2)+
+    geom_vline(xintercept = zoom1_high, color='orange', size=2)+
+    geom_point(aes(fill=loc_tag_class), shape=22, size=4, na.rm = TRUE) +
+    # geom_point(data=filter(gpa_long_foc, !is.na(PRODUCT) &(`Order within Fragment` > 580 & `Order within Fragment` < 620 & genome != '6461')),aes(color=AMR), na.rm = TRUE,  show.legend = FALSE)+
+    geom_point(data=filter(p1_data, !is.na(AMR)),  color='red', na.rm = TRUE)+
+    geom_point(data=filter(p1_data, !is.na(vir)),  color='pink', na.rm = TRUE)+
+    # scale_fill_viridis_d() + 
+    scale_color_brewer(palette = 'Set1') + 
+    theme_cowplot() + 
+    theme(legend.position = 'top', 
+          axis.title.x=element_text(size=11)) + 
+    scale_fill_manual(values = c(recipient_result = "#35B779FF", 
+                                 donor_recipient_result = "#440154FF", 
+                                 donor_result = "#31688EFF", 
+                                 result_only="#FDE725FF"))
+  p1
+  
+  # Don_rec_res "#35B779FF"
+  # Don_res "#440154FF"
+  # Rec_res "#31688EFF"
+  # res_only "#FDE725FF"
+  
+  # need to abricate and merge into annot by locus tag?
+  
+  annot <- 
+    gpa_long_foc %>% 
+    # filter(`Genome Fragment` == 1) %>% 
+    filter(order_in_result_genome >= zoom1_low & order_in_result_genome <= zoom1_high) %>% 
+    select(Gene, Annotation, order_in_result_genome) %>% unique() %>% 
+    left_join(gpa_abric) %>% 
+    mutate(Annotation2 = ifelse(is.na(PRODUCT), Annotation, PRODUCT), 
+           Annotation2=sub('\\[.*\\]','',Annotation2), 
+           Annotation3=sub('\\((.*)\\).*','\\1',Annotation2))
+  
+  
+  p2_data <- 
+    gpa_long_foc %>% 
+    filter(genome == RESULT) %>%
+    filter(order_in_result_genome >= zoom1_low & order_in_result_genome <= zoom1_high) %>% 
+    filter(!is.na(locus_tags))
+  
+  
+  p2 <- 
+    p2_data %>% 
+    ggplot(aes(x=order_in_result_genome, y=genome, group=genome)) + 
+    geom_vline(xintercept = zoom1_low -1, color='orange', size=2)+
+    geom_vline(xintercept = zoom1_high +1, color='orange', size=2)+
+    geom_point(aes(fill=loc_tag_class), shape=22, size=4.5, show.legend = FALSE) +
+    geom_point(data=filter(p2_data, !is.na(AMR)),fill='red', color='black', size=2,na.rm = TRUE , shape=21, show.legend = FALSE)+
+    geom_point(data=filter(p2_data, !is.na(vir)),fill='pink', color='black', size=2,na.rm = TRUE , shape=21, show.legend = FALSE)+
+    geom_text(data=annot, aes(x=order_in_result_genome, y=0, label=Annotation3), inherit.aes = FALSE, hjust='left', size=3.5) + 
+    scale_y_discrete(expand=expansion(mult=c(.55,.9))) + coord_flip()+
+    # scale_fill_viridis_d() +
+    # scale_fill_brewer(palette = 'Set1')+
+    scale_color_brewer(palette = 'Set1') + 
+    theme_cowplot() + 
+    theme(axis.text.x = element_text(angle = -45, vjust = -.7, size=10), 
+          axis.title.x = element_blank()) + 
+    xlab('Order')+
+    scale_fill_manual(values = c(recipient_result = "#35B779FF", 
+                                 donor_recipient_result = "#440154FF", 
+                                 donor_result = "#31688EFF", 
+                                 result_only="#FDE725FF"))
+  
+  
+  
+  
+  ## return
+  print(p1)
+  
+  print(p2)
+  
+  
+  return(list(p1,p2))
+  
+}
+
+
+
+
+x6461x13150 <- generate_transfer_plots(base_dir = 'outputs/pan_genomes/6461_13150_6461x13150', 
+                        DONOR='6461', 
+                        RECIPIENT = '13150', 
+                        RESULT='6461x13150', 
+                        adj1_low = 50, 
+                        adj1_high = 50, 
+                        low_shrink = 25,
+                        high_shrink = 25, 
+                        TARGET = 'TETRACYCLINE')
+
+
+
+x6461x6067 <- generate_transfer_plots(base_dir ='outputs/pan_genomes/6067_6461_6461x6067/', 
+                                DONOR = '6067', 
+                                RECIPIENT=, '6461',
+                                RESULT = '6461x6067',
+                                TARGET = 'BETA-LACTAM', 
+                                adj1_low = 50,
+                                adj1_high= 50,
+                                low_shrink=25, 
+                                high_shrink=25)
+####
+
+
+
+
+
+
+
+
+
+fig_2 <- ggdraw()+
+  draw_plot(x6461x13150[[1]], 0,.6,1,.4)+
+  draw_plot(x6461x13150[[2]], 0,0,1,.6)+
+  draw_plot_label(x=c(0,0), y=c(1,.6), label = c('A', 'B'))
+fig_2
+
+
+ggsave(fig_2,
+       filename = './outputs/x6461x13150.jpeg',
+       width = 260,
+       height = 260,
+       device = 'jpeg',
+       dpi = 300,
+       units = 'mm')
+
+
+
+
+
+fig_3 <- ggdraw()+
+  draw_plot(x6461x6067[[1]], 0,.6,1,.4)+
+  draw_plot(x6461x6067[[2]], 0,0,1,.6)+
+  draw_plot_label(x=c(0,0), y=c(1,.6), label = c('A', 'B'))
+fig_3
+
+
+ggsave(fig_3,
+       filename = './outputs/x6461x6067.jpeg',
+       width = 260,
+       height = 260,
+       device = 'jpeg',
+       dpi = 300,
+       units = 'mm')
+
 
 
 
