@@ -55,7 +55,7 @@ done < tempfile.tsv
 
 mkdir ./outputs/pan_genomes/6461s
 
-cp ./outputs/annotations/6461/6461.gff ./outputs/pan_genomes/6461s
+# cp ./outputs/annotations/6461/6461.gff ./outputs/pan_genomes/6461s
 
 
 while read a b c d e 

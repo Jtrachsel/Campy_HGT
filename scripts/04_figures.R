@@ -12,16 +12,16 @@ cii <- read_csv('./outputs/pan_genomes/6461s/gifrop_out/clustered_island_info.cs
 
 
 gpa <- read_csv('./outputs/pan_genomes/6461s/gene_presence_absence.csv',
-                col_types = 'cccdddcdcdcdddccccccccccc')
+                col_types = 'cccdddcdcdcdddcccccccccc')
 
 
 
 gpa <- gpa %>% arrange(`Genome Fragment`, `Order within Fragment`)
 
 
-is.na(gpa$`6461`)
+# is.na(gpa$`6461`)
 
-NOT6464 <- gpa[is.na(gpa$`6461`),]
+# NOT6464 <- gpa[is.na(gpa$`6461`),]
 
 loc_tag_class <- read_tsv('./outputs/result_locus_tag_classification.tsv')
 
@@ -44,20 +44,59 @@ gpa_abric <-
   unique()
 
 
+insert_order <- function(dat){
+  dat %>% 
+    filter(!is.na(locus_tags)) %>%
+    arrange(locus_tags) %>% 
+    mutate(ORDER=seq_along(locus_tags))
+}
+
+order_rel_res <- function(dat){
+  RES_ORDER <- 
+    dat %>%
+    filter(!is.na(RESISTANCE)) %>% 
+    group_by(ORDER, RESISTANCE) %>% 
+    tally() %>% 
+    filter(grepl('AMIKACIN;GENTAMICIN;KANAMYCIN;TOBRAMYCIN', RESISTANCE)) %>% 
+    pull(ORDER)
+  
+  dat %>% mutate(O_rel_res=ORDER-RES_ORDER)
+  
+}
 
 gpa_long <-
   gpa %>%
-  pivot_longer(cols = c(15:25), names_to='genome', values_to='locus_tags') %>% 
+  pivot_longer(cols = c(15:24), names_to='genome', values_to='locus_tags') %>% 
   left_join(loc_tag_class) %>% 
-  left_join(gpa_abric)
+  left_join(gpa_abric) %>% 
+  # filter(genome != '6461') %>% 
+  group_by(genome) %>%
+  nest() %>% 
+  mutate(data2=map(.x = data, .f = insert_order)) %>% 
+  select(genome, data2) %>% 
+  mutate(data3=map(.x = data2, .f = order_rel_res)) %>% 
+  select(genome, data3) %>% 
+  unnest(data3) %>% 
+  ungroup()
 
-resist_pan_coords <- 
-  gpa_long %>% 
-  filter(!is.na(RESISTANCE)) %>% 
-  group_by(`Order within Fragment`, RESISTANCE) %>% 
-  tally() %>% 
-  filter(grepl('AMIKACIN;GENTAMICIN;KANAMYCIN;TOBRAMYCIN', RESISTANCE)) %>% 
-  pull(`Order within Fragment`)
+loook <- gpa_long %>% 
+  group_by(Gene) %>% 
+  summarise(AVORD=mean(ORDER)) %>% 
+  arrange(AVORD) %>% 
+  mutate(rankORD=rank(AVORD, ties.method = 'first')) %>% 
+  select(Gene, rankORD)
+
+gpa_long <- 
+  gpa_long %>% left_join(loook)
+
+
+resist_pan_coords <-
+  gpa_long %>%
+  # filter(!is.na(RESISTANCE)) %>%
+  filter(grepl('AMIKACIN;GENTAMICIN;KANAMYCIN;TOBRAMYCIN', RESISTANCE)) %>%
+  group_by(rankORD, RESISTANCE) %>%
+  tally() %>%
+  pull(rankORD)
 
 pan_low <- signif(resist_pan_coords - 50, 3)
 pan_high <- signif(resist_pan_coords + 50, 3)
@@ -68,11 +107,17 @@ zoom1_high <- pan_high - 25
 # zoom2_low <- pan_low + 65
 # zoom2_high <- pan_high - 65
 
+# 
+# gpa_long_foc <- 
+#   gpa_long %>% 
+#   filter(`Genome Fragment` == 1) %>% 
+#   filter(`Order within Fragment` > pan_low & `Order within Fragment` < pan_high) 
+
 
 gpa_long_foc <- 
   gpa_long %>% 
   filter(`Genome Fragment` == 1) %>% 
-  filter(`Order within Fragment` > pan_low & `Order within Fragment` < pan_high) 
+  filter(rankORD > pan_low & rankORD < pan_high) 
 
 
   
@@ -110,13 +155,17 @@ gpa_long_foc <-
   gpa_long_foc %>% 
   mutate(genome = factor(genome, levels =lab_orders))
 
+LOOOOK <- gpa_long_foc %>% group_by(rankORD, Gene) %>% tally()
+
+# look <- gpa_long_foc %>% spread(key=genome, value=locus_tags)
+
 p1_data <- 
   gpa_long_foc %>% 
   filter(!is.na(locus_tags)) %>% 
   filter(genome != '6461') 
 p1 <- 
   p1_data %>% 
-  ggplot(aes(x=`Order within Fragment`, y=genome, group=genome)) + 
+  ggplot(aes(x=rankORD, y=genome, group=genome)) + 
   geom_vline(xintercept = zoom1_low, color='orange', size=2)+
   geom_vline(xintercept = zoom1_high, color='orange', size=2)+
   geom_point(aes(fill=classification), shape=22, size=4, na.rm = TRUE) +
@@ -130,7 +179,8 @@ p1 <-
   theme_cowplot() + 
   theme(legend.position = 'top', 
         axis.title.x=element_text(size=11))+
-  guides(fill=guide_legend(nrow = 2))
+  guides(fill=guide_legend(nrow = 2)) + 
+  xlab('Order')
 p1
 
 
@@ -139,30 +189,35 @@ p1
 annot <- 
   gpa_long_foc %>% 
   # filter(`Genome Fragment` == 1) %>% 
-  filter(`Order within Fragment` >= zoom1_low & `Order within Fragment` <= zoom1_high) %>% 
-  select(Gene, Annotation, `Order within Fragment`) %>% unique() %>% 
+  filter(rankORD >= zoom1_low & rankORD <= zoom1_high) %>% 
+  select(Gene, Annotation, rankORD) %>% unique() %>% 
   left_join(gpa_abric) %>% 
   mutate(Annotation2 = ifelse(is.na(PRODUCT), Annotation, PRODUCT), 
          Annotation2=sub('\\[.*\\]','',Annotation2), 
-         Annotation3=sub('\\((.*)\\).*','\\1',Annotation2))
+         Annotation3=sub('\\((.*)\\).*','\\1',Annotation2), 
+         Annotation4=sub('Putative ','',Annotation3), 
+         Annotation5=sub(' protein','',Annotation4), 
+         Annotation6=sub('hypothetical', 'hypothetical protein', Annotation5))
+
+
 
 
 p2 <- 
   gpa_long_foc %>% 
-  filter(`Genome Fragment` == 1 & genome != '6461') %>% 
-  filter(`Order within Fragment` >= zoom1_low & `Order within Fragment` <= zoom1_high) %>% 
+  # filter(`Genome Fragment` == 1 & genome != '6461') %>% 
+  filter(rankORD >= zoom1_low & rankORD <= zoom1_high) %>% 
   filter(!is.na(locus_tags)) %>% 
-  ggplot(aes(x=`Order within Fragment`, y=genome, group=genome)) + 
+  ggplot(aes(x=rankORD, y=genome, group=genome)) + 
   geom_vline(xintercept = zoom1_low -1, color='orange', size=2)+
   geom_vline(xintercept = zoom1_high +1, color='orange', size=2)+
   geom_point(aes(fill=classification), shape=22, size=4.5, show.legend = FALSE) +
   geom_point(data=filter(gpa_long_foc, !is.na(AMR) & genome != '6461'),
              fill='red',color='black', size=2,na.rm = TRUE , shape=21, show.legend = FALSE)+
   geom_point(data=filter(gpa_long_foc, !is.na(vir) & genome != '6461' &
-                           `Order within Fragment` >=zoom1_low &
-                           `Order within Fragment` <= zoom1_high),
+                           rankORD >=zoom1_low &
+                           rankORD <= zoom1_high),
              size=2,na.rm = TRUE , shape=21, color='black',fill='pink', show.legend = FALSE)+
-  geom_text(data=annot, aes(x=`Order within Fragment`, y=-5.5, label=Annotation3), inherit.aes = FALSE, hjust='left', size=3.5) + 
+  geom_text(data=annot, aes(x=rankORD, y=-5.5, label=Annotation6), inherit.aes = FALSE, hjust='left', size=3.5) + 
   scale_y_discrete(expand=expansion(mult=c(.75,.09))) + coord_flip()+
   scale_fill_viridis_d() +
   # scale_fill_brewer(palette = 'Set1')+
@@ -184,7 +239,7 @@ fig_1
 
 
 ggsave(fig_1,
-       filename = './outputs/figure1.jpeg',
+       filename = './outputs/6461s.jpeg',
        width = 260,
        height = 260,
        device = 'jpeg',
