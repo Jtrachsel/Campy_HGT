@@ -59,11 +59,11 @@ resist_pan_coords <-
   filter(grepl('AMIKACIN;GENTAMICIN;KANAMYCIN;TOBRAMYCIN', RESISTANCE)) %>% 
   pull(`Order within Fragment`)
 
-pan_low <- signif(resist_pan_coords - 70, 3)
-pan_high <- signif(resist_pan_coords + 100, 3)
+pan_low <- signif(resist_pan_coords - 50, 3)
+pan_high <- signif(resist_pan_coords + 50, 3)
 
-zoom1_low <- pan_low + 52
-zoom1_high <- pan_high - 65
+zoom1_low <- pan_low + 25
+zoom1_high <- pan_high - 25
 
 # zoom2_low <- pan_low + 65
 # zoom2_high <- pan_high - 65
@@ -98,7 +98,7 @@ check <-
   gpa_long_foc %>% 
   mutate(present=ifelse(is.na(locus_tags), 0,1)) %>% 
   select(genome, present, Gene) %>% 
-  spread(key=Gene, value=present) %>% 
+  spread(key=Gene, value=present, fill=0) %>% 
   column_to_rownames('genome') %>% 
   as.matrix() %>% 
   dist() %>% 
@@ -110,23 +110,32 @@ gpa_long_foc <-
   gpa_long_foc %>% 
   mutate(genome = factor(genome, levels =lab_orders))
 
-p1 <- 
+p1_data <- 
   gpa_long_foc %>% 
   filter(!is.na(locus_tags)) %>% 
-  filter(genome != '6461') %>% 
+  filter(genome != '6461') 
+p1 <- 
+  p1_data %>% 
   ggplot(aes(x=`Order within Fragment`, y=genome, group=genome)) + 
   geom_vline(xintercept = zoom1_low, color='orange', size=2)+
   geom_vline(xintercept = zoom1_high, color='orange', size=2)+
   geom_point(aes(fill=classification), shape=22, size=4, na.rm = TRUE) +
   # geom_point(data=filter(gpa_long_foc, !is.na(PRODUCT) &(`Order within Fragment` > 580 & `Order within Fragment` < 620 & genome != '6461')),aes(color=AMR), na.rm = TRUE,  show.legend = FALSE)+
-  geom_point(data=filter(gpa_long_foc, !is.na(AMR)),aes(color=AMR), na.rm = TRUE)+
-  # geom_point(aes(color=vir), na.rm = TRUE)+
+  geom_point(data=filter(p1_data, !is.na(AMR)),aes(size="APH(2'')-If"), color='black', fill='red', shape=21)+
+  geom_point(data=filter(p1_data, !is.na(vir)),aes(alpha='virulence related'), color='black',fill='pink', shape=21)+
   scale_fill_viridis_d() + 
   scale_color_brewer(palette = 'Set1') + 
+  scale_alpha_manual(name = "", values = 1) +
+  scale_size_manual(name = "", values = 2) +
   theme_cowplot() + 
   theme(legend.position = 'top', 
-        axis.title.x=element_text(size=11))
+        axis.title.x=element_text(size=11))+
+  guides(fill=guide_legend(nrow = 2))
 p1
+
+
+gg+guides(fill=guide_legend(nrow=2,byrow=TRUE))
+
 # need to abricate and merge into annot by locus tag?
 annot <- 
   gpa_long_foc %>% 
