@@ -134,7 +134,6 @@ p1 <-
 p1
 
 
-gg+guides(fill=guide_legend(nrow=2,byrow=TRUE))
 
 # need to abricate and merge into annot by locus tag?
 annot <- 
