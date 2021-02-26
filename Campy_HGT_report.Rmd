@@ -1,7 +1,7 @@
 ---
 title: "Campy HGT"
 author: "Julian Trachsel"
-date: "9/22/2020"
+date: "12/02/2020"
 output:
   html_document:
     toc: true
@@ -22,6 +22,8 @@ source("./scripts/01_setup.R", local = knitr::knit_global())
 source("./scripts/03_HGT_ID.R", local = knitr::knit_global())
 
 
+RESULTS[[1]] %>% 
+select(c(1,6, 12, 16, 19, 20, 26))
 
 ```
 
@@ -71,7 +73,7 @@ Visualizing pairwise ANI.
 # 
 ani_mds %>% ggplot(aes(x=V1, y=V2)) +
   geom_point()+
-  geom_text_repel(aes(label=genome)) +
+  geom_text_repel(aes(label=genome), max.overlaps = 1000) +
   labs(x='MDS1', y='MDS2') +
   ggtitle('MDS showing genome similarity, based on ANI')
 
@@ -95,32 +97,6 @@ read_tsv('./outputs/01_metadata.tsv') %>%
 
 
 ```
-
-  
-### Issues to address:  
-  
-The SampleF assembly is not complete, Unicycler did not identify the chromosome as circular and so did not re-orient the starting coordinates to match the other genomes.  We should make an effort to fix this.  If you provide me the location of the raw reads (both long and short) I can make an attempt at this.  
-For experiment_1 : 6631 + 11601MD = 11601MDx6631, I did not detect any genes that were transferred into this strain, only three that were deleted.
-  
-  
-### Notes  
-
-  
-I should also mention that some of the events may be caused by residual sequencing errors. For example, if there is a gene that is interrupted by and indel and it was split into two genes in a parental genome, but this same gene is not interrupted by an indel and not split into two genes in the result genome, this will look like a deletion event when it's really just a leftover sequencing error.  
-  
-  
-Another thing to note.  Often there are two or more very closely spaced transfers of genomic islands.  I think these represent larger recombination events.  I think these occur where the donor genome has some homology with the recipient genome, but maybe also some extra genes sprinkled in.  In the result genome, this donor region replaces the homologous recipient region, resulting in new genes being introduced into the result genome.  These events aren't represented by one genomic island transfer, because these regions of homology contain genes that are common to all three genomes ( these common genes interrupt the genomic island ).  In support of this hypothesis, there are  instances of what looks like the same gene being transferred into the recipient strain and also deleted from the recipient strain at the same time.  These cases represent the recipient versions of these genes being replaced by donor versions of these genes.  Because the donor and recipient versions of the same gene are less than 99% identical they are called as two different genes in the pangenome analysis.
-  
-    
-  
-
-
-
-
-
-
-
-
 
 ## Results  
   
@@ -151,7 +127,7 @@ for (result_genome in metadata$result_genome){
   cat("  \n###",  exp_name, "\n")
   
   RESULTS[[result_genome]] %>% 
-  select(c(1,6, 12, 17, 18, 19, 24)) %>% 
+  select(c(1,6, 12, 16, 19, 20, 26)) %>% 
   kable(caption = 'Transferred genomic islands') %>% 
   kable_styling(bootstrap_options = 'striped') %>% print()
     
