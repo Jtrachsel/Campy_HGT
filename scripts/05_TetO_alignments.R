@@ -15,7 +15,7 @@ look <- gpa[grep('TETRACYCLINE', gpa$RESISTANCE),]
 
 THESE <- 
   look %>%
-  gather(c(15:22), key = 'genome', value='locus_tag') %>% 
+  gather(c(15:23), key = 'genome', value='locus_tag') %>% 
   select(Gene, Annotation, `Genome Fragment`, `Order within Fragment`, genome, locus_tag) %>% 
   na.omit() %>% 
   # mutate(genome_frag=ifelse(`Genome Fragment` == 77, 'chrom', 'plasmid')) %>% 
@@ -94,7 +94,7 @@ library(msa)
 
 
 
-TetOs <- TetO[width(TetO) == 639] 
+TetOs <- TetO[width(TetO) %in% c(639, 561)] 
 
 
 
@@ -105,7 +105,7 @@ TetOnucs <- TetOnuc[width(TetOnuc) == 1920]
 names(TetOs)
 tet_order <- c('13150_FAOCEDLB_01881', '6461x13150_DMIKNJMH_01884',
                'GCA_004947465_ELGLOCID_01772','GCA_004947585_PJNBKKGD_01276','GCA_005266575_DBOCFHAN_01484',
-               '6461x13150exp137_DOLACMNP_01878','6461x13150_DMIKNJMH_00132','6461_EKEIMHEI_00148')
+               '6461x13150exp137_DOLACMNP_01878','6461x13150_DMIKNJMH_00132','6461_EKEIMHEI_00148', 'JCC_BLFAMBHF_01924')
 
 
 actives <- c('6461x13150exp137_DOLACMNP_01878','6461x13150_DMIKNJMH_00132','6461_EKEIMHEI_00148')
@@ -223,6 +223,21 @@ o13150[2] %>% writeXStringSet(filepath = './outputs/13150_50kb_plas.fna')
 TETRES13150 <- readDNAStringSet('./outputs/annotations/6461x13150/6461x13150.fna')
 
 TETRES13150[2] %>% writeXStringSet(filepath = './outputs/tetres_13150_50kb_plas.fna')
+
+### where is tetO in the GCA genomes
+
+teto_cii <- read_csv('./outputs/pan_genomes/tetO/gifrop_out/clustered_island_info.csv')
+
+
+LOOK <- 
+  teto_cii %>% filter(
+  grepl('TETRACYCLINE', RESISTANCE) &
+    grepl('GCA', genome_name)
+)
+LOOK %>% select(genome_name, RESISTANCE, only_island) %>% 
+  transmute(genome=genome_name, 
+            RESISTANCE=RESISTANCE, 
+            location=ifelse(only_island, 'probably plasmid', 'chromosome'))
 
 # 
 # read_tsv('outputs/SNPs_13150/exp137/exp137.tab')
