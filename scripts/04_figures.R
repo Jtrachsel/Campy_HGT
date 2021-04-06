@@ -98,11 +98,11 @@ resist_pan_coords <-
   tally() %>%
   pull(rankORD)
 
-pan_low <- signif(resist_pan_coords - 50, 3)
-pan_high <- signif(resist_pan_coords + 50, 3)
+pan_low <- signif(resist_pan_coords - 40, 3)
+pan_high <- signif(resist_pan_coords + 30, 3)
 
-zoom1_low <- pan_low + 25
-zoom1_high <- pan_high - 25
+zoom1_low <- pan_low + 30
+zoom1_high <- pan_high - 20
 
 # zoom2_low <- pan_low + 65
 # zoom2_high <- pan_high - 65
@@ -241,7 +241,7 @@ fig_1
 ggsave(fig_1,
        filename = './outputs/6461s.jpeg',
        width = 260,
-       height = 260,
+       height = 210,
        device = 'jpeg',
        dpi = 300,
        units = 'mm')
@@ -276,7 +276,8 @@ generate_transfer_plots <- function(base_dir,
                                     DONOR,
                                     RECIPIENT,
                                     RESULT,
-                                    TARGET, 
+                                    TARGET,
+                                    POINT_MUT=F,
                                     adj1_low,
                                     adj1_high,
                                     low_shrink,
@@ -356,18 +357,37 @@ generate_transfer_plots <- function(base_dir,
   gpa_long <- gpa_long %>% left_join(res_order)
     
   # pick resist? return one result for each resist?
+  # browser()
+  if(POINT_MUT){
+    resist_pan_coords <- 
+      gpa_long %>% 
+      filter(`Genome Fragment` ==1) %>% 
+      # filter(!is.na(RESISTANCE)) %>% 
+      group_by(order_in_result_genome,`Genome Fragment`, Gene) %>% 
+      tally() %>% 
+      filter(grepl(TARGET, Gene)) %>% 
+      pull(order_in_result_genome)
+    
+    pan_low <- signif(resist_pan_coords - adj1_low, 3)
+    pan_high <- signif(resist_pan_coords + adj1_high, 3)
+    
+    
+  }else{
+    
+    resist_pan_coords <- 
+      gpa_long %>% 
+      filter(`Genome Fragment` ==1) %>% 
+      filter(!is.na(RESISTANCE)) %>% 
+      group_by(order_in_result_genome,`Genome Fragment`, RESISTANCE) %>% 
+      tally() %>% 
+      filter(grepl(TARGET, RESISTANCE)) %>% 
+      pull(order_in_result_genome)
+    
+    pan_low <- signif(resist_pan_coords - adj1_low, 3)
+    pan_high <- signif(resist_pan_coords + adj1_high, 3)
+    
+  }
   
-  resist_pan_coords <- 
-    gpa_long %>% 
-    filter(`Genome Fragment` ==1) %>% 
-    filter(!is.na(RESISTANCE)) %>% 
-    group_by(order_in_result_genome,`Genome Fragment`, RESISTANCE) %>% 
-    tally() %>% 
-    filter(grepl(TARGET, RESISTANCE)) %>% 
-    pull(order_in_result_genome)
-  
-  pan_low <- signif(resist_pan_coords - adj1_low, 3)
-  pan_high <- signif(resist_pan_coords + adj1_high, 3)
   
   # 
   # pan_low <- signif(resist_pan_coords - 70, 3)
@@ -417,18 +437,37 @@ generate_transfer_plots <- function(base_dir,
   
   lab_orders <- check$labels[check$order]
   
-  gpa_long_foc <- 
-    gpa_long_foc %>% 
-    filter(!is.na(locus_tags)) %>% 
-    filter(genome == RESULT) %>% 
-    mutate(genome = factor(genome, levels =lab_orders)) %>% 
-    arrange((locus_tags))
+  
+  if(POINT_MUT){
     
+    gpa_long_foc <- 
+      gpa_long_foc %>% 
+      filter(!is.na(locus_tags)) %>% 
+      filter(genome == RESULT) %>% 
+      mutate(genome = factor(genome, levels =lab_orders)) %>%
+      mutate(AMR=ifelse(POINT_MUT & Gene == TARGET, TRUE, NA)) %>% 
+      arrange((locus_tags))
+    
+  }else{
+    gpa_long_foc <- 
+      gpa_long_foc %>% 
+      filter(!is.na(locus_tags)) %>% 
+      filter(genome == RESULT) %>% 
+      mutate(genome = factor(genome, levels =lab_orders)) %>%
+      arrange((locus_tags))
+    
+  }
+  
+    
+  
+  
+  
   
   p1_data <- 
     gpa_long_foc %>% 
     filter(!is.na(locus_tags)) %>% 
     filter(genome == RESULT) 
+  # browser()
   p1 <- 
     p1_data %>%
     ggplot(aes(x=order_in_result_genome, y=genome, group=genome)) + 
@@ -536,24 +575,43 @@ x6461x6067 <- generate_transfer_plots(base_dir ='outputs/pan_genomes/6067_6461_6
 ####
 
 
+x13150x6631 <- generate_transfer_plots(base_dir = 'outputs/pan_genomes/6631_13150_13150x6631',
+                        DONOR = '6631',
+                        RECIPIENT = '13150',
+                        RESULT = '13150x6631', 
+                        TARGET = 'rpsL', 
+                        POINT_MUT = T,
+                        adj1_low = 30,
+                        adj1_high= 30,
+                        low_shrink=15, 
+                        high_shrink=15)
 
 
 
+###
 
+LOOK <- x13150x6631[[2]]$data
+LOOK$loc_tag_class
+LOOK2 <- LOOK %>% filter(loc_tag_class != 'recipient_result')
+gff <- gff_parse3('./outputs/pan_genomes/6631_13150_13150x6631/13150x6631.gff')
+
+gff$locus_tag %in% LOOK2$locus_tags
+
+res <- LOOK2 %>% left_join(gff, c('locus_tags'= 'locus_tag'))
 
 
 
 fig_2 <- ggdraw()+
-  draw_plot(x6461x13150[[1]], 0,.6,1,.4)+
-  draw_plot(x6461x13150[[2]], 0,0,1,.6)+
-  draw_plot_label(x=c(0,0), y=c(1,.6), label = c('A', 'B'))
+  draw_plot(x6461x13150[[1]], 0,.8,1,.2)+
+  draw_plot(x6461x13150[[2]], 0,0,1,.8)+
+  draw_plot_label(x=c(0,0), y=c(1,.8), label = c('A', 'B'))
 fig_2
 
 
 ggsave(fig_2,
        filename = './outputs/x6461x13150.jpeg',
        width = 260,
-       height = 260,
+       height = 290,
        device = 'jpeg',
        dpi = 300,
        units = 'mm')
@@ -563,22 +621,36 @@ ggsave(fig_2,
 
 
 fig_3 <- ggdraw()+
-  draw_plot(x6461x6067[[1]], 0,.6,1,.4)+
-  draw_plot(x6461x6067[[2]], 0,0,1,.6)+
-  draw_plot_label(x=c(0,0), y=c(1,.6), label = c('A', 'B'))
+  draw_plot(x6461x6067[[1]], 0,.8,1,.2)+
+  draw_plot(x6461x6067[[2]], 0,0,1,.8)+
+  draw_plot_label(x=c(0,0), y=c(1,.8), label = c('A', 'B'))
 fig_3
 
 
 ggsave(fig_3,
        filename = './outputs/x6461x6067.jpeg',
        width = 260,
-       height = 260,
+       height = 290,
        device = 'jpeg',
        dpi = 300,
        units = 'mm')
 
 
 
+fig_4 <- ggdraw()+
+  draw_plot(x13150x6631[[1]], 0,.8,1,.2)+
+  draw_plot(x13150x6631[[2]], 0,0,1,.8)+
+  draw_plot_label(x=c(0,0), y=c(1,.8), label = c('A', 'B'))
+fig_4
+
+
+ggsave(fig_4,
+       filename = './outputs/13150x6631.jpeg',
+       width = 260,
+       height = 290,
+       device = 'jpeg',
+       dpi = 300,
+       units = 'mm')
 
 
 # 
