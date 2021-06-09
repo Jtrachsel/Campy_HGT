@@ -35,3 +35,10 @@ gpa_abric %>%
   write_tsv('./outputs/AMR_annotation_differences.tsv')
 
 
+
+### check in-vivo tet(O) location
+
+
+# look <- read_tsv('./input_genomes/6461x13150exp137_AMR.tsv', col_types = c('ccddcccccccccdddddcccc'))
+
+

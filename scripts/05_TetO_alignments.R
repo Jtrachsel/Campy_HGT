@@ -15,7 +15,7 @@ look <- gpa[grep('TETRACYCLINE', gpa$RESISTANCE),]
 
 THESE <- 
   look %>%
-  gather(c(15:23), key = 'genome', value='locus_tag') %>% 
+  gather(c(15:24), key = 'genome', value='locus_tag') %>% 
   select(Gene, Annotation, `Genome Fragment`, `Order within Fragment`, genome, locus_tag) %>% 
   na.omit() %>% 
   # mutate(genome_frag=ifelse(`Genome Fragment` == 77, 'chrom', 'plasmid')) %>% 
@@ -96,25 +96,37 @@ library(msa)
 
 TetOs <- TetO[width(TetO) %in% c(639, 561)] 
 
-
-
-TetOnucs <- TetOnuc[width(TetOnuc) == 1920] 
+TetOnucs <- TetOnuc[width(TetOnuc) %in% c(1686, 1920)] 
 
 
 
 names(TetOs)
 tet_order <- c('13150_FAOCEDLB_01881', '6461x13150_DMIKNJMH_01884',
-               'GCA_004947465_ELGLOCID_01772','GCA_004947585_PJNBKKGD_01276','GCA_005266575_DBOCFHAN_01484',
-               '6461x13150exp137_DOLACMNP_01878','6461x13150_DMIKNJMH_00132','6461_EKEIMHEI_00148', 'JCC_BLFAMBHF_01924')
+               'GCA_004947465_ELGLOCID_01772','GCA_004947585_PJNBKKGD_01276','GCA_005266575_DBOCFHAN_01484', '13150xJCC_CEKLBJOM_01874',
+               '6461x13150exp137_DOLACMNP_01878','6461x13150_DMIKNJMH_00132','6461_EKEIMHEI_00148', 'JCC_BBOJDOKH_01960')
 
 
-actives <- c('6461x13150exp137_DOLACMNP_01878','6461x13150_DMIKNJMH_00132','6461_EKEIMHEI_00148')
+actives <- c('6461x13150exp137_DOLACMNP_01878','6461x13150_DMIKNJMH_00132','6461_EKEIMHEI_00148', '13150xJCC_CEKLBJOM_01874')
 
 # GCA 004945185 IKGHOOBL 01821
 
 TetOs <- TetOs[match(tet_order, names(TetOs))]
 TetOnucs <- TetOnucs[match(tet_order, names(TetOnucs))]
 
+
+
+only_6461x13150 <- names(TetOnucs) %in% c('6461x13150_DMIKNJMH_00132', '13150_FAOCEDLB_01881','6461x13150_DMIKNJMH_01884', 
+                       '6461_EKEIMHEI_00148')
+
+
+TetOnucs[only_6461x13150] %>% 
+  msa::msaClustalOmega() %>% 
+  msa::msaPrettyPrint(file = 'only_6461x13150_TetO_nuc.pdf')
+
+
+TetOs[only_6461x13150] %>% 
+  msa::msaClustalOmega() %>% 
+  msa::msaPrettyPrint(file = 'only_6461x13150_TetO_AA.pdf')
 
 
 # 13150_FAOCEDLB_01881 inactive
@@ -164,7 +176,7 @@ gff_parse3 <- function(path){
                     delim = '\t',
                     col_names = c("seqid", "source", "type", "start", "end", "score", "strand","phase","attributes"),
                     comment = '#', progress = FALSE, col_types = c('cccddcccc')) %>%
-    filter(type != 'gene') %>%
+    # filter(type != 'gene') %>%
     tidyr::extract(attributes,
                    into = c('ID', 'locus_tag', 'product'),
                    regex ='ID=(.*);.*locus_tag=(.*_[0-9]+);.*product=(.*)',
@@ -239,8 +251,54 @@ LOOK %>% select(genome_name, RESISTANCE, only_island) %>%
             RESISTANCE=RESISTANCE, 
             location=ifelse(only_island, 'probably plasmid', 'chromosome'))
 
-# 
-# read_tsv('outputs/SNPs_13150/exp137/exp137.tab')
+
+
+
+#### 6461 23S genes ##
+# all genomes where 6461 is the recipient?
+
+tst <- gff_parse3('./outputs/annotations/6461/6461.gff') %>%
+  filter(grepl('23S ribosomal RNA', product)) %>%
+  select(seqid, locus_tag)
+
+
+extract_23S_locus_tags <-
+  function(gff_path){
+  gff_parse3(gff_path) %>%
+      filter(grepl('23S ribosomal RNA', product)) %>%
+      select(seqid, locus_tag)
+}
+
+extract_23S_locus_tags('./outputs/annotations/6461/6461.gff')
+
+
+align_these <- read_tsv('./outputs/01_metadata.tsv') %>% filter(recipient_genome=='6461') %>% pull(result_genome)
+align_these <- c(align_these, '6461')
+
+gff_paths <- paste0('./outputs/annotations/', align_these, '/', align_these, '.gff')
+
+loc_tag_tib <- map(gff_paths, extract_23S_locus_tags) %>% bind_rows()
+
+faa_paths <-  paste0('./outputs/annotations/', align_these, '/', align_these, '.ffn')
+
+all_faas <- purrr::map(faa_paths, Biostrings::readAAStringSet) %>% purrr::reduce(c)
+# names(all_faas) <- sub('(........_.....) .*','\\1',names(all_faas))
+
+just_23S <- all_faas[grepl(paste(loc_tag_tib$locus_tag, collapse = '|'), names(all_faas))]
+
+new_names <- tibble(seq_name=names(just_23S)) %>% 
+  mutate(locus_tag = sub('(........_.....) .*','\\1',seq_name)) %>% 
+  left_join(loc_tag_tib) %>% 
+  mutate(new_name=paste(seqid, seq_name))
+
+names(just_23S) <- new_names$new_name
+
+rRNA23S_aln <- msa(inputSeqs = just_23S)
+
+msaPrettyPrint(rRNA23S_aln, file='23S_rRNA.pdf')
+
+
+# # read_tsv('outputs/SNPs_13150/exp137/exp137.tab')
 # 
 
 ### old below ####

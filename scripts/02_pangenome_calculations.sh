@@ -101,7 +101,7 @@ mkdir ./outputs/pan_genomes/tetO
 cp ./outputs/annotations/13150/13150.gff ./outputs/pan_genomes/tetO/
 cp ./outputs/annotations/6461/6461.gff ./outputs/pan_genomes/tetO/
 cp ./outputs/annotations/JCC/JCC.gff ./outputs/pan_genomes/tetO/
-
+cp ./outputs/annotations/13150xJCC/13150xJCC.gff ./outputs/pan_genomes/tetO/
 
 
 while read a b c d e 

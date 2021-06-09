@@ -281,7 +281,9 @@ generate_transfer_plots <- function(base_dir,
                                     adj1_low,
                                     adj1_high,
                                     low_shrink,
-                                    high_shrink){
+                                    high_shrink, 
+                                    genomic_fragment=1, 
+                                    TARGET_COL=Gene){
   # browser()
   # outputs/pan_genomes/6631_11601MD_11601MDx6631/ path to directory that contains pangenome calc by roary
   rtab_path <- paste0(base_dir, '/gene_presence_absence.Rtab')
@@ -361,11 +363,11 @@ generate_transfer_plots <- function(base_dir,
   if(POINT_MUT){
     resist_pan_coords <- 
       gpa_long %>% 
-      filter(`Genome Fragment` ==1) %>% 
+      filter(`Genome Fragment` == genomic_fragment) %>% 
       # filter(!is.na(RESISTANCE)) %>% 
-      group_by(order_in_result_genome,`Genome Fragment`, Gene) %>% 
+      group_by(order_in_result_genome,`Genome Fragment`, {{TARGET_COL}}) %>% 
       tally() %>% 
-      filter(grepl(TARGET, Gene)) %>% 
+      filter(grepl(TARGET, {{TARGET_COL}}, fixed = T)) %>% 
       pull(order_in_result_genome)
     
     pan_low <- signif(resist_pan_coords - adj1_low, 3)
@@ -376,7 +378,7 @@ generate_transfer_plots <- function(base_dir,
     
     resist_pan_coords <- 
       gpa_long %>% 
-      filter(`Genome Fragment` ==1) %>% 
+      filter(`Genome Fragment` ==genomic_fragment) %>% 
       filter(!is.na(RESISTANCE)) %>% 
       group_by(order_in_result_genome,`Genome Fragment`, RESISTANCE) %>% 
       tally() %>% 
@@ -402,7 +404,7 @@ generate_transfer_plots <- function(base_dir,
   
   gpa_long_foc <- 
     gpa_long %>% 
-    filter(`Genome Fragment` == 1) %>% 
+    filter(`Genome Fragment` == genomic_fragment) %>% 
     filter(order_in_result_genome > pan_low & order_in_result_genome < pan_high) 
   
   
@@ -445,7 +447,7 @@ generate_transfer_plots <- function(base_dir,
       filter(!is.na(locus_tags)) %>% 
       filter(genome == RESULT) %>% 
       mutate(genome = factor(genome, levels =lab_orders)) %>%
-      mutate(AMR=ifelse(POINT_MUT & Gene == TARGET, TRUE, NA)) %>% 
+      mutate(AMR=ifelse(POINT_MUT & {{TARGET_COL}} == TARGET, TRUE, NA)) %>% 
       arrange((locus_tags))
     
   }else{
@@ -589,7 +591,92 @@ x13150x6631 <- generate_transfer_plots(base_dir = 'outputs/pan_genomes/6631_1315
 
 
 ###
+x6461x13150exp137 <- generate_transfer_plots(base_dir = 'outputs/pan_genomes/6461_13150_6461x13150exp137/',
+                                       DONOR = '6461',
+                                       RECIPIENT = '13150',
+                                       RESULT = '6461x13150exp137', 
+                                       TARGET = 'TETRACYCLINE', 
+                                       POINT_MUT = T,
+                                       adj1_low = 30,
+                                       adj1_high= 30,
+                                       low_shrink=15, 
+                                       high_shrink=15,
+                                       genomic_fragment = 1, 
+                                       TARGET_COL = RESISTANCE)
 
+
+
+x6461x13150exp137[[1]]
+
+x6461x13150exp137[[2]]
+
+
+
+
+x6461x13150_vivo <- ggdraw()+
+  draw_plot(x6461x13150exp137[[1]], 0,.8,1,.2)+
+  draw_plot(x6461x13150exp137[[2]], 0,0,1,.8)+
+  draw_plot_label(x=c(0,0), y=c(1,.8), label = c('A', 'B'))
+x6461x13150_vivo
+
+
+ggsave(x6461x13150_vivo,
+       filename = './outputs/x6461x13150_vivo.jpeg',
+       width = 260,
+       height = 290,
+       device = 'jpeg',
+       dpi = 300,
+       units = 'mm')
+
+
+
+
+###
+
+
+
+# 6461x13150
+
+
+
+x6461x13150__2 <- generate_transfer_plots(base_dir = 'outputs/pan_genomes/6461_13150_6461x13150/',
+                                             DONOR = '6461',
+                                             RECIPIENT = '13150',
+                                             RESULT = '6461x13150', 
+                                             TARGET = 'TETRACYCLINE', 
+                                             POINT_MUT = T,
+                                             adj1_low = 30,
+                                             adj1_high= 30,
+                                             low_shrink=15, 
+                                             high_shrink=15,
+                                             genomic_fragment = 2, 
+                                             TARGET_COL = RESISTANCE)
+
+
+
+
+x6461x13150_plasmid <- ggdraw()+
+  draw_plot(x6461x13150__2[[1]], 0,.8,1,.2)+
+  draw_plot(x6461x13150__2[[2]], 0,0,1,.8)+
+  draw_plot_label(x=c(0,0), y=c(1,.8), label = c('A', 'B'))
+x6461x13150_plasmid
+
+
+ggsave(x6461x13150_plasmid,
+       filename = './outputs/x6461x13150_plasmid_tetO.jpeg',
+       width = 260,
+       height = 290,
+       device = 'jpeg',
+       dpi = 300,
+       units = 'mm')
+
+
+x6461x13150__2[[1]]
+x6461x13150__2[[2]]
+
+#
+
+####
 LOOK <- x13150x6631[[2]]$data
 LOOK$loc_tag_class
 LOOK2 <- LOOK %>% filter(loc_tag_class != 'recipient_result')
