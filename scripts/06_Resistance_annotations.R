@@ -42,3 +42,4 @@ gpa_abric %>%
 # look <- read_tsv('./input_genomes/6461x13150exp137_AMR.tsv', col_types = c('ccddcccccccccdddddcccc'))
 
 
+
